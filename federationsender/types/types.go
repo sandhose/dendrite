@@ -22,19 +22,21 @@ import (
 
 // A JoinedHost is a server that is joined to a matrix room.
 type JoinedHost struct {
-	// The MemberEventID of a m.room.member join event.
-	MemberEventID string
-	// The domain part of the state key of the m.room.member join event
-	ServerName gomatrixserverlib.ServerName
+	RoomID        string                       `gorm:"PRIMARY_KEY"` // The room ID
+	MemberEventID string                       `gorm:"PRIMARY_KEY"` // The MemberEventID of a m.room.member join event.
+	ServerName    gomatrixserverlib.ServerName `gorm:""`            // The domain part of the state key of the m.room.member join event
+}
+
+type Room struct {
+	RoomID      string `gorm:"PRIMARY_KEY"` // The room ID
+	LastEventID string `gorm:"NOT NULL"`    // Last event in the room
 }
 
 // A EventIDMismatchError indicates that we have got out of sync with the
 // room server.
 type EventIDMismatchError struct {
-	// The event ID we have stored in our local database.
-	DatabaseID string
-	// The event ID received from the room server.
-	RoomServerID string
+	DatabaseID   string // The event ID we have stored in our local database.
+	RoomServerID string // The event ID received from the room server.
 }
 
 func (e EventIDMismatchError) Error() string {

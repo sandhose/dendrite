@@ -20,7 +20,7 @@ import (
 	"net/url"
 
 	"github.com/matrix-org/dendrite/common"
-	"github.com/matrix-org/dendrite/federationsender/storage/postgres"
+	"github.com/matrix-org/dendrite/federationsender/storage/orm"
 	"github.com/matrix-org/dendrite/federationsender/types"
 )
 
@@ -38,7 +38,7 @@ func NewDatabase(dataSourceName string) (Database, error) {
 	}
 	switch uri.Scheme {
 	case "postgres":
-		return postgres.NewDatabase(dataSourceName)
+		return orm.NewDatabase(dataSourceName)
 	default:
 		return nil, errors.New("unknown schema")
 	}
