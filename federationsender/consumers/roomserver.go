@@ -241,7 +241,9 @@ func joinedHostsFromEvents(evs []gomatrixserverlib.Event) ([]types.JoinedHost, e
 			return nil, err
 		}
 		joinedHosts = append(joinedHosts, types.JoinedHost{
-			MemberEventID: ev.EventID(), ServerName: serverName,
+			MemberEventID: ev.EventID(),
+			ServerName:    serverName,
+			RoomID:        ev.RoomID(),
 		})
 	}
 	return joinedHosts, nil

@@ -29,7 +29,7 @@ func NewDatabase(dataSourceName string) (*ORM, error) {
 }
 
 func (o *ORM) GetJoinedHosts(ctx context.Context, roomID string) (result []types.JoinedHost, err error) {
-	o.db.Where("name = ?", roomID).Find(&result)
+	o.db.Where(&types.JoinedHost{RoomID: roomID}).Find(&result)
 	return
 }
 
@@ -65,7 +65,7 @@ func (o *ORM) UpdateRoom(ctx context.Context, roomID, oldEventID, newEventID str
 
 		// Add the specified hosts
 		for _, addHost := range addHosts {
-			if err := tx.Create(addHost).Error; err != nil {
+			if err := tx.Create(&addHost).Error; err != nil {
 				return err
 			}
 		}
