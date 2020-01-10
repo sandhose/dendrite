@@ -20,6 +20,7 @@ import (
 
 	"github.com/matrix-org/dendrite/common"
 	"github.com/matrix-org/dendrite/federationsender/storage/orm"
+	"github.com/matrix-org/dendrite/federationsender/storage/postgres"
 	"github.com/matrix-org/dendrite/federationsender/types"
 )
 
