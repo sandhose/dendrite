@@ -15,7 +15,7 @@ require (
 	github.com/lib/pq v1.1.1
 	github.com/matrix-org/dugong v0.0.0-20171220115018-ea0a4690a0d5
 	github.com/matrix-org/gomatrix v0.0.0-20190528120928-7df988a63f26
-	github.com/matrix-org/gomatrixserverlib v0.0.0-20190814163046-d6285a18401f
+	github.com/matrix-org/gomatrixserverlib v0.0.0-20200110113524-5f9a44f2fc67
 	github.com/matrix-org/naffka v0.0.0-20171115094957-662bfd0841d0
 	github.com/matrix-org/util v0.0.0-20171127121716-2e2df66af2f5
 	github.com/nfnt/resize v0.0.0-20160724205520-891127d8d1b5
