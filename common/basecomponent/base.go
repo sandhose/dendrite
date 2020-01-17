@@ -15,10 +15,21 @@
 package basecomponent
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"io"
 	"net/http"
+	"time"
 
+	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/peer"
+	crypto "github.com/libp2p/go-libp2p-crypto"
+	host "github.com/libp2p/go-libp2p-host"
+	p2phttp "github.com/libp2p/go-libp2p-http"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
+	routing "github.com/libp2p/go-libp2p-routing"
+	p2pdisc "github.com/libp2p/go-libp2p/p2p/discovery"
 	"github.com/matrix-org/dendrite/common/keydb"
 	"github.com/matrix-org/gomatrixserverlib"
 	"github.com/matrix-org/naffka"
@@ -52,6 +63,12 @@ type BaseDendrite struct {
 	Cfg           *config.Dendrite
 	KafkaConsumer sarama.Consumer
 	KafkaProducer sarama.SyncProducer
+
+	// Store our libp2p object so that we can make outgoing connections from it
+	// later
+	LibP2P        host.Host
+	LibP2PContext context.Context
+	LibP2PCancel  context.CancelFunc
 }
 
 // NewBaseDendrite creates a new instance to be used by a component.
@@ -68,13 +85,64 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 
 	kafkaConsumer, kafkaProducer := setupKafka(cfg)
 
-	return &BaseDendrite{
-		componentName: componentName,
-		tracerCloser:  closer,
-		Cfg:           cfg,
-		APIMux:        mux.NewRouter().UseEncodedPath(),
-		KafkaConsumer: kafkaConsumer,
-		KafkaProducer: kafkaProducer,
+	if cfg.Matrix.ServerName == "p2p" {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		privKey, err := crypto.UnmarshalEd25519PrivateKey(cfg.Matrix.PrivateKey[:])
+		if err != nil {
+			panic(err)
+		}
+
+		libp2p, err := libp2p.New(ctx,
+			libp2p.Identity(privKey),
+			libp2p.DefaultListenAddrs,
+			libp2p.DefaultTransports,
+			libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
+				return dht.New(ctx, h)
+			}),
+			libp2p.EnableAutoRelay(),
+		)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Our public key:", privKey.GetPublic())
+		fmt.Println("Our node ID:", libp2p.ID())
+		fmt.Println("Our addresses:", libp2p.Addrs())
+
+		cfg.Matrix.ServerName = gomatrixserverlib.ServerName(libp2p.ID().String())
+
+		if _, err := dht.New(ctx, libp2p); err != nil {
+			panic(err)
+		}
+
+		mdns := mDNSListener{host: libp2p}
+		serv, err := p2pdisc.NewMdnsService(ctx, libp2p, time.Second*10, "_matrix-dendrite-p2p._tcp")
+		if err != nil {
+			panic(err)
+		}
+		serv.RegisterNotifee(&mdns)
+
+		return &BaseDendrite{
+			componentName: componentName,
+			tracerCloser:  closer,
+			Cfg:           cfg,
+			APIMux:        mux.NewRouter().UseEncodedPath(),
+			KafkaConsumer: kafkaConsumer,
+			KafkaProducer: kafkaProducer,
+			LibP2P:        libp2p,
+			LibP2PContext: ctx,
+			LibP2PCancel:  cancel,
+		}
+	} else {
+		return &BaseDendrite{
+			componentName: componentName,
+			tracerCloser:  closer,
+			Cfg:           cfg,
+			APIMux:        mux.NewRouter().UseEncodedPath(),
+			KafkaConsumer: kafkaConsumer,
+			KafkaProducer: kafkaProducer,
+		}
 	}
 }
 
@@ -150,9 +218,23 @@ func (b *BaseDendrite) CreateKeyDB() keydb.Database {
 // CreateFederationClient creates a new federation client. Should only be called
 // once per component.
 func (b *BaseDendrite) CreateFederationClient() *gomatrixserverlib.FederationClient {
-	return gomatrixserverlib.NewFederationClient(
-		b.Cfg.Matrix.ServerName, b.Cfg.Matrix.KeyID, b.Cfg.Matrix.PrivateKey,
-	)
+	if b.LibP2P != nil {
+		fmt.Println("Running in libp2p federation mode")
+		fmt.Println("Warning: Federation with non-libp2p homeservers will not work in this mode yet!")
+		tr := &http.Transport{}
+		tr.RegisterProtocol(
+			"matrix",
+			p2phttp.NewTransport(b.LibP2P, p2phttp.ProtocolOption("/matrix")),
+		)
+		return gomatrixserverlib.NewFederationClientWithTransport(
+			b.Cfg.Matrix.ServerName, b.Cfg.Matrix.KeyID, b.Cfg.Matrix.PrivateKey, tr,
+		)
+	} else {
+		fmt.Println("Running in regular federation mode")
+		return gomatrixserverlib.NewFederationClient(
+			b.Cfg.Matrix.ServerName, b.Cfg.Matrix.KeyID, b.Cfg.Matrix.PrivateKey,
+		)
+	}
 }
 
 // SetupAndServeHTTP sets up the HTTP server to serve endpoints registered on
@@ -212,4 +294,16 @@ func setupKafka(cfg *config.Dendrite) (sarama.Consumer, sarama.SyncProducer) {
 	}
 
 	return consumer, producer
+}
+
+type mDNSListener struct {
+	host host.Host
+}
+
+func (n *mDNSListener) HandlePeerFound(p peer.AddrInfo) {
+	//fmt.Println("Found libp2p peer via mDNS:", p)
+	if err := n.host.Connect(context.Background(), p); err != nil {
+		//	fmt.Println("Error adding peer via mDNS:", err)
+	}
+	fmt.Println("Known libp2p peers:", n.host.Peerstore().Peers())
 }
