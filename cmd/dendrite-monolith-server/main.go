@@ -86,7 +86,7 @@ func main() {
 		logrus.Fatal(http.ListenAndServe(*httpBindAddr, nil))
 	}()
 	// Expose the matrix APIs also via libp2p
-	if cfg.Matrix.ServerName == "p2p" {
+	if base.LibP2P != nil {
 		go func() {
 			logrus.Info("Listening on libp2p host ID ", base.LibP2P.ID())
 			listener, err := gostream.Listen(base.LibP2P, "/matrix")
