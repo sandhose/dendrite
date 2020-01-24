@@ -71,7 +71,7 @@ func main() {
 	federationapi.SetupFederationAPIComponent(base, accountDB, deviceDB, federation, &keyRing, alias, input, query, asQuery, fedSenderAPI)
 	mediaapi.SetupMediaAPIComponent(base, deviceDB)
 	publicroomsapi.SetupPublicRoomsAPIComponent(base, deviceDB)
-	syncapi.SetupSyncAPIComponent(base, deviceDB, accountDB, query)
+	syncapi.SetupSyncAPIComponent(base, deviceDB, accountDB, query, federation, cfg)
 
 	httpHandler := common.WrapHandlerInCORS(base.APIMux)
 
@@ -86,15 +86,17 @@ func main() {
 		logrus.Fatal(http.ListenAndServe(*httpBindAddr, nil))
 	}()
 	// Expose the matrix APIs also via libp2p
-	go func() {
-		logrus.Info("Listening on libp2p host ID ", base.LibP2P.ID())
-		listener, err := gostream.Listen(base.LibP2P, "/matrix")
-		if err != nil {
-			panic(err)
-		}
-		defer listener.Close()
-		http.Serve(listener, nil)
-	}()
+	if base.LibP2P != nil {
+		go func() {
+			logrus.Info("Listening on libp2p host ID ", base.LibP2P.ID())
+			listener, err := gostream.Listen(base.LibP2P, "/matrix")
+			if err != nil {
+				panic(err)
+			}
+			defer listener.Close()
+			http.Serve(listener, nil)
+		}()
+	}
 	// Handle HTTPS if certificate and key are provided
 	go func() {
 		if *certFile != "" && *keyFile != "" {
