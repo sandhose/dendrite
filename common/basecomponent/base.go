@@ -69,6 +69,7 @@ type BaseDendrite struct {
 	LibP2P        host.Host
 	LibP2PContext context.Context
 	LibP2PCancel  context.CancelFunc
+	LibP2PDHT     *dht.IpfsDHT
 }
 
 // NewBaseDendrite creates a new instance to be used by a component.
@@ -93,12 +94,19 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 			panic(err)
 		}
 
+		var libp2pdht *dht.IpfsDHT
 		libp2p, err := libp2p.New(ctx,
 			libp2p.Identity(privKey),
 			libp2p.DefaultListenAddrs,
 			libp2p.DefaultTransports,
-			libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
-				return dht.New(ctx, h)
+			libp2p.Routing(func(h host.Host) (r routing.PeerRouting, err error) {
+				libp2pdht, err = dht.New(ctx, h)
+				if err != nil {
+					return nil, err
+				}
+				libp2pdht.Validator = LibP2PValidator{}
+				r = libp2pdht
+				return
 			}),
 			libp2p.EnableAutoRelay(),
 		)
@@ -111,10 +119,6 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 		fmt.Println("Our addresses:", libp2p.Addrs())
 
 		cfg.Matrix.ServerName = gomatrixserverlib.ServerName(libp2p.ID().String())
-
-		if _, err := dht.New(ctx, libp2p); err != nil {
-			panic(err)
-		}
 
 		mdns := mDNSListener{host: libp2p}
 		serv, err := p2pdisc.NewMdnsService(ctx, libp2p, time.Second*10, "_matrix-dendrite-p2p._tcp")
@@ -133,6 +137,7 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 			LibP2P:        libp2p,
 			LibP2PContext: ctx,
 			LibP2PCancel:  cancel,
+			LibP2PDHT:     libp2pdht,
 		}
 	} else {
 		return &BaseDendrite{

@@ -11,8 +11,15 @@ require (
 	github.com/ipfs/go-cid v0.0.4
 	github.com/klauspost/crc32 v0.0.0-20161016154125-cb6bfca970f6 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/lib/pq v1.2.0
+	github.com/lib/pq v0.0.0-20170918175043-23da1db4f16d
+	github.com/libp2p/go-libp2p v0.5.0
+	github.com/libp2p/go-libp2p-core v0.3.0
+	github.com/libp2p/go-libp2p-crypto v0.1.0
+	github.com/libp2p/go-libp2p-gostream v0.2.0
+	github.com/libp2p/go-libp2p-host v0.1.0
+	github.com/libp2p/go-libp2p-http v0.1.4
 	github.com/libp2p/go-libp2p-kad-dht v0.5.0
+	github.com/libp2p/go-libp2p-routing v0.1.0
 	github.com/matrix-org/dugong v0.0.0-20171220115018-ea0a4690a0d5
 	github.com/matrix-org/gomatrix v0.0.0-20190528120928-7df988a63f26
 	github.com/matrix-org/gomatrixserverlib v0.0.0-20200124100636-0c2ec91d1df5
