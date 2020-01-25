@@ -41,6 +41,8 @@ import (
 	"github.com/gorilla/mux"
 	sarama "gopkg.in/Shopify/sarama.v1"
 
+	"golang.org/x/crypto/ed25519"
+
 	appserviceAPI "github.com/matrix-org/dendrite/appservice/api"
 	"github.com/matrix-org/dendrite/common/config"
 	federationSenderAPI "github.com/matrix-org/dendrite/federationsender/api"
@@ -212,7 +214,12 @@ func (b *BaseDendrite) CreateAccountsDB() *accounts.Database {
 // CreateKeyDB creates a new instance of the key database. Should only be called
 // once per component.
 func (b *BaseDendrite) CreateKeyDB() keydb.Database {
-	db, err := keydb.NewDatabase(string(b.Cfg.Database.ServerKey))
+	db, err := keydb.NewDatabase(
+		string(b.Cfg.Database.ServerKey),
+		b.Cfg.Matrix.ServerName,
+		b.Cfg.Matrix.PrivateKey.Public().(ed25519.PublicKey),
+		b.Cfg.Matrix.KeyID,
+	)
 	if err != nil {
 		logrus.WithError(err).Panicf("failed to connect to keys db")
 	}
