@@ -121,7 +121,7 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 		cfg.Matrix.ServerName = gomatrixserverlib.ServerName(libp2p.ID().String())
 
 		mdns := mDNSListener{host: libp2p}
-		serv, err := p2pdisc.NewMdnsService(ctx, libp2p, time.Second*10, "_matrix-dendrite-p2p._tcp")
+		serv, err := p2pdisc.NewMdnsService(ctx, libp2p, time.Second*5, "_matrix-dendrite-p2p._tcp")
 		if err != nil {
 			panic(err)
 		}

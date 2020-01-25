@@ -54,7 +54,10 @@ func main() {
 	deviceDB := base.CreateDeviceDB()
 	keyDB := base.CreateKeyDB()
 	federation := base.CreateFederationClient()
-	keyRing := keydb.CreateKeyRing(federation.Client, keyDB)
+	keyRing := keydb.CreateDirectAvoidingLoopbackKeyRing(
+		federation.Client, keyDB,
+		cfg.Matrix.ServerName, cfg.Matrix.PrivateKey, cfg.Matrix.KeyID,
+	)
 
 	alias, input, query := roomserver.SetupRoomServerComponent(base)
 	typingInputAPI := typingserver.SetupTypingServerComponent(base, cache.NewTypingCache())
