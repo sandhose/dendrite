@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/klauspost/crc32 v0.0.0-20161016154125-cb6bfca970f6 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/lib/pq v0.0.0-20170918175043-23da1db4f16d
+	github.com/lib/pq v1.2.0
 	github.com/libp2p/go-libp2p v0.5.0
 	github.com/libp2p/go-libp2p-core v0.3.0
 	github.com/libp2p/go-libp2p-crypto v0.1.0
