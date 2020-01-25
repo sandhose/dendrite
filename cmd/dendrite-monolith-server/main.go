@@ -93,8 +93,10 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			defer listener.Close()
-			http.Serve(listener, nil)
+			defer func() {
+				logrus.Fatal(listener.Close())
+			}()
+			logrus.Fatal(http.Serve(listener, nil))
 		}()
 	}
 	// Handle HTTPS if certificate and key are provided
