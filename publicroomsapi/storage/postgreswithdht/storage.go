@@ -104,8 +104,12 @@ func (d *PublicRoomsServerDatabase) ResetDHTMaintenance() {
 }
 
 func (d *PublicRoomsServerDatabase) Interval() {
-	d.AdvertiseRoomsIntoDHT()
-	d.FindRoomsInDHT()
+	if err := d.AdvertiseRoomsIntoDHT(); err != nil {
+		fmt.Println("Failed to advertise room in DHT:", err)
+	}
+	if err := d.FindRoomsInDHT(); err != nil {
+		fmt.Println("Failed to find rooms in DHT:", err)
+	}
 	d.maintenanceTimer = time.AfterFunc(DHTInterval, d.Interval)
 }
 
@@ -116,20 +120,17 @@ func (d *PublicRoomsServerDatabase) AdvertiseRoomsIntoDHT() error {
 	dbCtx, dbCancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer dbCancel()
 	if count, err := d.PublicRoomsServerDatabase.CountPublicRooms(dbCtx); err != nil || count == 0 {
-		fmt.Println("Not advertising rooms:", err)
 		return err
 	}
 	ourRooms, err := d.GetPublicRooms(dbCtx, 0, 1024, "")
 	if err != nil {
-		fmt.Println("Error getting public rooms:", err)
 		return err
 	}
 	fmt.Println("Going to advertise", len(ourRooms), "rooms into the DHT")
 	if j, err := json.Marshal(ourRooms); err == nil {
-		fmt.Println("Marshalled:", string(j))
 		d.ourRoomsContext, d.ourRoomsCancel = context.WithCancel(context.Background())
 		if err := d.dht.PutValue(d.ourRoomsContext, "/matrix/publicRooms", j); err != nil {
-			fmt.Println("Advertising into DHT failed:", err)
+			return err
 		}
 	}
 	return nil
@@ -142,14 +143,12 @@ func (d *PublicRoomsServerDatabase) FindRoomsInDHT() error {
 	defer d.foundRoomsMutex.Unlock()
 	results, err := d.dht.GetValues(searchCtx, "/matrix/publicRooms", 1024)
 	if err != nil {
-		fmt.Println("Error getting rooms in DHT:", err)
 		return err
 	}
 	d.foundRooms = make(map[string]types.PublicRoom)
 	for _, result := range results {
 		var received []types.PublicRoom
 		if err := json.Unmarshal(result.Val, &received); err != nil {
-			fmt.Println("Failed to unmarshal rooms:", err)
 			return err
 		}
 		for _, room := range received {
@@ -161,6 +160,6 @@ func (d *PublicRoomsServerDatabase) FindRoomsInDHT() error {
 			d.foundRooms[room.RoomID] = room
 		}
 	}
-	fmt.Println("Found rooms:", d.foundRooms)
+	fmt.Println("Found", len(d.foundRooms), "rooms")
 	return nil
 }
