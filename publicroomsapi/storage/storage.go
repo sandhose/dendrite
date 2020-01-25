@@ -18,8 +18,10 @@ import (
 	"context"
 	"net/url"
 
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/matrix-org/dendrite/common"
 	"github.com/matrix-org/dendrite/publicroomsapi/storage/postgres"
+	"github.com/matrix-org/dendrite/publicroomsapi/storage/postgreswithdht"
 	"github.com/matrix-org/dendrite/publicroomsapi/types"
 	"github.com/matrix-org/gomatrixserverlib"
 )
@@ -45,5 +47,19 @@ func NewPublicRoomsServerDatabase(dataSourceName string) (Database, error) {
 		return postgres.NewPublicRoomsServerDatabase(dataSourceName)
 	default:
 		return postgres.NewPublicRoomsServerDatabase(dataSourceName)
+	}
+}
+
+// NewPublicRoomsServerDatabase opens a database connection.
+func NewPublicRoomsServerDatabaseWithDHT(dataSourceName string, dht *dht.IpfsDHT) (Database, error) {
+	uri, err := url.Parse(dataSourceName)
+	if err != nil {
+		return postgreswithdht.NewPublicRoomsServerDatabase(dataSourceName, dht)
+	}
+	switch uri.Scheme {
+	case "postgres":
+		return postgreswithdht.NewPublicRoomsServerDatabase(dataSourceName, dht)
+	default:
+		return postgreswithdht.NewPublicRoomsServerDatabase(dataSourceName, dht)
 	}
 }

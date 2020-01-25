@@ -31,7 +31,13 @@ func SetupPublicRoomsAPIComponent(
 	deviceDB *devices.Database,
 	rsQueryAPI roomserverAPI.RoomserverQueryAPI,
 ) {
-	publicRoomsDB, err := storage.NewPublicRoomsServerDatabase(string(base.Cfg.Database.PublicRoomsAPI))
+	var err error
+	var publicRoomsDB storage.Database
+	if base.LibP2P != nil {
+		publicRoomsDB, err = storage.NewPublicRoomsServerDatabaseWithDHT(string(base.Cfg.Database.PublicRoomsAPI), base.LibP2PDHT)
+	} else {
+		publicRoomsDB, err = storage.NewPublicRoomsServerDatabase(string(base.Cfg.Database.PublicRoomsAPI))
+	}
 	if err != nil {
 		logrus.WithError(err).Panicf("failed to connect to public rooms db")
 	}
