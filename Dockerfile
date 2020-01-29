@@ -29,4 +29,4 @@ RUN rm -rf /usr/share/nginx/html && ln -s /app /usr/share/nginx/html
 CMD sh /usr/local/bin/p2p-entrypoint.sh
 
 EXPOSE 80
-EXPOXE 5432
+EXPOSE 5432
