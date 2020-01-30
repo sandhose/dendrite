@@ -21,7 +21,6 @@ ADD docker/p2p-entrypoint.sh /usr/local/bin
 ADD docker/postgres/create_db.sh /docker-entrypoint-initdb.d/create_db.sh
 
 RUN chmod +x /docker-entrypoint-initdb.d/create_db.sh
-RUN sed -i '3i\ \ \ \ application/wasm wasm\;' /etc/nginx/mime.types
 RUN adduser --system nginx
 RUN addgroup --system nginx
 RUN rm -rf /usr/share/nginx/html && ln -s /app /usr/share/nginx/html
