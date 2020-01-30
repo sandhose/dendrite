@@ -18,7 +18,6 @@ COPY --from=postgres . /
 ENV PGDATA=/var/lib/postgresql/data
 
 ADD docker/p2p-entrypoint.sh /usr/local/bin
-ADD docker/p2p-riot-config.json /app/config.json
 ADD docker/postgres/create_db.sh /docker-entrypoint-initdb.d/create_db.sh
 
 RUN chmod +x /docker-entrypoint-initdb.d/create_db.sh
