@@ -109,7 +109,7 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 				if err != nil {
 					return nil, err
 				}
-				libp2pdht.Validator = LibP2PValidator{}
+				//libp2pdht.Validator = LibP2PValidator{}
 				r = libp2pdht
 				return
 			}),
