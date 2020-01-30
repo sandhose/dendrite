@@ -15,4 +15,4 @@ done
 
 # Start nginx
 echo "Starting Riot"
-nginx
+nginx -g 'daemon off;'
