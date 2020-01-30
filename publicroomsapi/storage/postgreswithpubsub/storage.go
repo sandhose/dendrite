@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package postgreswithdht
+package postgreswithpubsub
 
 import (
 	"context"
@@ -27,38 +27,47 @@ import (
 	"github.com/matrix-org/dendrite/publicroomsapi/types"
 	"github.com/matrix-org/gomatrixserverlib"
 
-	dht "github.com/libp2p/go-libp2p-kad-dht"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
-const DHTInterval = time.Second * 10
+const MaintenanceInterval = time.Second * 10
+
+type discoveredRoom struct {
+	time time.Time
+	room types.PublicRoom
+}
 
 // PublicRoomsServerDatabase represents a public rooms server database.
 type PublicRoomsServerDatabase struct {
-	dht *dht.IpfsDHT
-	postgres.PublicRoomsServerDatabase
-	ourRoomsContext  context.Context             // our current value in the DHT
-	ourRoomsCancel   context.CancelFunc          // cancel when we want to expire our value
-	foundRooms       map[string]types.PublicRoom // additional rooms we have learned about from the DHT
-	foundRoomsMutex  sync.RWMutex                // protects foundRooms
-	maintenanceTimer *time.Timer                 //
-	roomsAdvertised  atomic.Value                // stores int
-	roomsDiscovered  atomic.Value                // stores int
+	postgres.PublicRoomsServerDatabase                           //
+	pubsub                             *pubsub.PubSub            //
+	subscription                       *pubsub.Subscription      //
+	foundRooms                         map[string]discoveredRoom // additional rooms we have learned about from the DHT
+	foundRoomsMutex                    sync.RWMutex              // protects foundRooms
+	maintenanceTimer                   *time.Timer               //
+	roomsAdvertised                    atomic.Value              // stores int
 }
 
 // NewPublicRoomsServerDatabase creates a new public rooms server database.
-func NewPublicRoomsServerDatabase(dataSourceName string, dht *dht.IpfsDHT) (*PublicRoomsServerDatabase, error) {
+func NewPublicRoomsServerDatabase(dataSourceName string, pubsub *pubsub.PubSub) (*PublicRoomsServerDatabase, error) {
 	pg, err := postgres.NewPublicRoomsServerDatabase(dataSourceName)
 	if err != nil {
 		return nil, err
 	}
 	provider := PublicRoomsServerDatabase{
-		dht:                       dht,
+		pubsub:                    pubsub,
 		PublicRoomsServerDatabase: *pg,
+		foundRooms:                make(map[string]discoveredRoom),
 	}
-	go provider.ResetDHTMaintenance()
-	provider.roomsAdvertised.Store(0)
-	provider.roomsDiscovered.Store(0)
-	return &provider, nil
+	if sub, err := pubsub.Subscribe("/matrix/publicRooms"); err == nil {
+		provider.subscription = sub
+		go provider.MaintenanceTimer()
+		go provider.FindRooms()
+		provider.roomsAdvertised.Store(0)
+		return &provider, nil
+	} else {
+		return nil, err
+	}
 }
 
 func (d *PublicRoomsServerDatabase) GetRoomVisibility(ctx context.Context, roomID string) (bool, error) {
@@ -66,34 +75,29 @@ func (d *PublicRoomsServerDatabase) GetRoomVisibility(ctx context.Context, roomI
 }
 
 func (d *PublicRoomsServerDatabase) SetRoomVisibility(ctx context.Context, visible bool, roomID string) error {
-	d.ResetDHTMaintenance()
+	d.MaintenanceTimer()
 	return d.PublicRoomsServerDatabase.SetRoomVisibility(ctx, visible, roomID)
 }
 
 func (d *PublicRoomsServerDatabase) CountPublicRooms(ctx context.Context) (int64, error) {
-	count, err := d.PublicRoomsServerDatabase.CountPublicRooms(ctx)
-	if err != nil {
-		return 0, err
-	}
 	d.foundRoomsMutex.RLock()
 	defer d.foundRoomsMutex.RUnlock()
-	return count + int64(len(d.foundRooms)), nil
+	return int64(len(d.foundRooms)), nil
 }
 
 func (d *PublicRoomsServerDatabase) GetPublicRooms(ctx context.Context, offset int64, limit int16, filter string) ([]types.PublicRoom, error) {
-	realfilter := filter
-	if realfilter == "__local__" {
-		realfilter = ""
-	}
-	rooms, err := d.PublicRoomsServerDatabase.GetPublicRooms(ctx, offset, limit, realfilter)
-	if err != nil {
-		return []types.PublicRoom{}, err
-	}
-	if filter != "__local__" {
+	var rooms []types.PublicRoom
+	if filter == "__local__" {
+		if r, err := d.PublicRoomsServerDatabase.GetPublicRooms(ctx, offset, limit, ""); err == nil {
+			rooms = append(rooms, r...)
+		} else {
+			return []types.PublicRoom{}, err
+		}
+	} else {
 		d.foundRoomsMutex.RLock()
 		defer d.foundRoomsMutex.RUnlock()
 		for _, room := range d.foundRooms {
-			rooms = append(rooms, room)
+			rooms = append(rooms, room.room)
 		}
 	}
 	return rooms, nil
@@ -107,7 +111,7 @@ func (d *PublicRoomsServerDatabase) UpdateRoomFromEvent(ctx context.Context, eve
 	return d.PublicRoomsServerDatabase.UpdateRoomFromEvent(ctx, event)
 }
 
-func (d *PublicRoomsServerDatabase) ResetDHTMaintenance() {
+func (d *PublicRoomsServerDatabase) MaintenanceTimer() {
 	if d.maintenanceTimer != nil && !d.maintenanceTimer.Stop() {
 		<-d.maintenanceTimer.C
 	}
@@ -115,52 +119,59 @@ func (d *PublicRoomsServerDatabase) ResetDHTMaintenance() {
 }
 
 func (d *PublicRoomsServerDatabase) Interval() {
-	if err := d.AdvertiseRoomsIntoDHT(); err != nil {
-		//	fmt.Println("Failed to advertise room in DHT:", err)
+	d.foundRoomsMutex.Lock()
+	for k, v := range d.foundRooms {
+		if time.Since(v.time) > time.Minute {
+			delete(d.foundRooms, k)
+		}
 	}
-	if err := d.FindRoomsInDHT(); err != nil {
-		//	fmt.Println("Failed to find rooms in DHT:", err)
+	d.foundRoomsMutex.Unlock()
+	if err := d.AdvertiseRooms(); err != nil {
+		fmt.Println("Failed to advertise room in DHT:", err)
 	}
-	fmt.Println("Found", d.roomsDiscovered.Load(), "room(s), advertised", d.roomsAdvertised.Load(), "room(s)")
-	d.maintenanceTimer = time.AfterFunc(DHTInterval, d.Interval)
+	d.foundRoomsMutex.RLock()
+	defer d.foundRoomsMutex.RUnlock()
+	fmt.Println("Found", len(d.foundRooms), "room(s), advertised", d.roomsAdvertised.Load(), "room(s)")
+	d.maintenanceTimer = time.AfterFunc(MaintenanceInterval, d.Interval)
 }
 
-func (d *PublicRoomsServerDatabase) AdvertiseRoomsIntoDHT() error {
+func (d *PublicRoomsServerDatabase) AdvertiseRooms() error {
 	dbCtx, dbCancel := context.WithTimeout(context.Background(), 3*time.Second)
 	_ = dbCancel
 	ourRooms, err := d.GetPublicRooms(dbCtx, 0, 1024, "__local__")
 	if err != nil {
 		return err
 	}
-	if j, err := json.Marshal(ourRooms); err == nil {
-		d.roomsAdvertised.Store(len(ourRooms))
-		d.ourRoomsContext, d.ourRoomsCancel = context.WithCancel(context.Background())
-		if err := d.dht.PutValue(d.ourRoomsContext, "/matrix/publicRooms", j); err != nil {
-			return err
+	advertised := 0
+	for _, room := range ourRooms {
+		if j, err := json.Marshal(room); err == nil {
+			if err := d.pubsub.Publish("/matrix/publicRooms", j); err != nil {
+				fmt.Println("Failed to publish public room:", err)
+			} else {
+				advertised++
+			}
 		}
 	}
+
+	d.roomsAdvertised.Store(advertised)
 	return nil
 }
 
-func (d *PublicRoomsServerDatabase) FindRoomsInDHT() error {
-	d.foundRoomsMutex.Lock()
-	searchCtx, searchCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer searchCancel()
-	defer d.foundRoomsMutex.Unlock()
-	results, err := d.dht.GetValues(searchCtx, "/matrix/publicRooms", 1024)
-	if err != nil {
-		return err
-	}
-	d.foundRooms = make(map[string]types.PublicRoom)
-	for _, result := range results {
-		var received []types.PublicRoom
-		if err := json.Unmarshal(result.Val, &received); err != nil {
-			return err
+func (d *PublicRoomsServerDatabase) FindRooms() {
+	for {
+		msg, err := d.subscription.Next(context.Background())
+		if err != nil {
+			continue
 		}
-		for _, room := range received {
-			d.foundRooms[room.RoomID] = room
+		received := discoveredRoom{
+			time: time.Now(),
 		}
+		if err := json.Unmarshal(msg.Data, &received.room); err != nil {
+			fmt.Println("Unmarshal error:", err)
+			continue
+		}
+		d.foundRoomsMutex.Lock()
+		d.foundRooms[received.room.RoomID] = received
+		d.foundRoomsMutex.Unlock()
 	}
-	d.roomsDiscovered.Store(len(d.foundRooms))
-	return nil
 }

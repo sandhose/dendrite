@@ -23,11 +23,13 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p"
+	circuit "github.com/libp2p/go-libp2p-circuit"
 	"github.com/libp2p/go-libp2p-core/peer"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	host "github.com/libp2p/go-libp2p-host"
 	p2phttp "github.com/libp2p/go-libp2p-http"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	routing "github.com/libp2p/go-libp2p-routing"
 	p2pdisc "github.com/libp2p/go-libp2p/p2p/discovery"
 	"github.com/matrix-org/dendrite/common/keydb"
@@ -72,6 +74,7 @@ type BaseDendrite struct {
 	LibP2PContext context.Context
 	LibP2PCancel  context.CancelFunc
 	LibP2PDHT     *dht.IpfsDHT
+	LibP2PPubsub  *pubsub.PubSub
 }
 
 // NewBaseDendrite creates a new instance to be used by a component.
@@ -111,7 +114,15 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 				return
 			}),
 			libp2p.EnableAutoRelay(),
+			libp2p.EnableRelay(circuit.OptHop),
 		)
+		if err != nil {
+			panic(err)
+		}
+
+		libp2ppubsub, err := pubsub.NewGossipSub(context.Background(), libp2p, []pubsub.Option{
+			pubsub.WithMessageSigning(true),
+		}...)
 		if err != nil {
 			panic(err)
 		}
@@ -140,6 +151,7 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 			LibP2PContext: ctx,
 			LibP2PCancel:  cancel,
 			LibP2PDHT:     libp2pdht,
+			LibP2PPubsub:  libp2ppubsub,
 		}
 	} else {
 		return &BaseDendrite{
@@ -317,5 +329,5 @@ func (n *mDNSListener) HandlePeerFound(p peer.AddrInfo) {
 	if err := n.host.Connect(context.Background(), p); err != nil {
 		//	fmt.Println("Error adding peer via mDNS:", err)
 	}
-	fmt.Println("Known libp2p peers:", n.host.Peerstore().Peers())
+	fmt.Println("Currently connected to", len(n.host.Peerstore().Peers())-1, "libp2p peer(s)")
 }

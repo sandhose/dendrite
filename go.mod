@@ -12,6 +12,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lib/pq v1.2.0
 	github.com/libp2p/go-libp2p v0.5.0
+	github.com/libp2p/go-libp2p-circuit v0.1.4
 	github.com/libp2p/go-libp2p-core v0.3.0
 	github.com/libp2p/go-libp2p-crypto v0.1.0
 	github.com/libp2p/go-libp2p-gostream v0.2.0
@@ -19,6 +20,7 @@ require (
 	github.com/libp2p/go-libp2p-http v0.1.4
 	github.com/libp2p/go-libp2p-kad-dht v0.5.0
 	github.com/libp2p/go-libp2p-peerstore v0.1.4
+	github.com/libp2p/go-libp2p-pubsub v0.2.5
 	github.com/libp2p/go-libp2p-record v0.1.2
 	github.com/libp2p/go-libp2p-routing v0.1.0
 	github.com/matrix-org/dugong v0.0.0-20171220115018-ea0a4690a0d5
@@ -26,6 +28,7 @@ require (
 	github.com/matrix-org/gomatrixserverlib v0.0.0-20200124100636-0c2ec91d1df5
 	github.com/matrix-org/naffka v0.0.0-20171115094957-662bfd0841d0
 	github.com/matrix-org/util v0.0.0-20171127121716-2e2df66af2f5
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/nfnt/resize v0.0.0-20160724205520-891127d8d1b5
 	github.com/opentracing/opentracing-go v1.0.2
 	github.com/pierrec/lz4 v0.0.0-20161206202305-5c9560bfa9ac // indirect

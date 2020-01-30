@@ -34,7 +34,7 @@ func SetupPublicRoomsAPIComponent(
 	var err error
 	var publicRoomsDB storage.Database
 	if base.LibP2P != nil {
-		publicRoomsDB, err = storage.NewPublicRoomsServerDatabaseWithDHT(string(base.Cfg.Database.PublicRoomsAPI), base.LibP2PDHT)
+		publicRoomsDB, err = storage.NewPublicRoomsServerDatabaseWithPubSub(string(base.Cfg.Database.PublicRoomsAPI), base.LibP2PPubsub)
 	} else {
 		publicRoomsDB, err = storage.NewPublicRoomsServerDatabase(string(base.Cfg.Database.PublicRoomsAPI))
 	}
