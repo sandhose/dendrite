@@ -398,7 +398,7 @@ func loadConfig(
 	config.Media.AbsBasePath = Path(absPath(basePath, config.Media.BasePath))
 
 	// Generate data from config options
-	err = config.derive()
+	err = config.Derive()
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +408,7 @@ func loadConfig(
 
 // derive generates data that is derived from various values provided in
 // the config file.
-func (config *Dendrite) derive() error {
+func (config *Dendrite) Derive() error {
 	// Determine registrations flows based off config values
 
 	config.Derived.Registration.Params = make(map[string]interface{})
