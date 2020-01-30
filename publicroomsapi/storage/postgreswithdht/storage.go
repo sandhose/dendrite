@@ -105,10 +105,10 @@ func (d *PublicRoomsServerDatabase) ResetDHTMaintenance() {
 
 func (d *PublicRoomsServerDatabase) Interval() {
 	if err := d.AdvertiseRoomsIntoDHT(); err != nil {
-		fmt.Println("Failed to advertise room in DHT:", err)
+		//	fmt.Println("Failed to advertise room in DHT:", err)
 	}
 	if err := d.FindRoomsInDHT(); err != nil {
-		fmt.Println("Failed to find rooms in DHT:", err)
+		//	fmt.Println("Failed to find rooms in DHT:", err)
 	}
 	d.maintenanceTimer = time.AfterFunc(DHTInterval, d.Interval)
 }
