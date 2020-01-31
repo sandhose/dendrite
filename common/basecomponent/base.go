@@ -326,7 +326,8 @@ type mDNSListener struct {
 
 func (n *mDNSListener) HandlePeerFound(p peer.AddrInfo) {
 	//fmt.Println("Found libp2p peer via mDNS:", p)
-	if err := n.host.Connect(context.Background(), p); err != nil {
+	if err := n.host.Connect(context.Background(), p); err == nil {
+		fmt.Println("Found peer with ID:", p.ID)
 		//	fmt.Println("Error adding peer via mDNS:", err)
 	}
 	fmt.Println("Currently connected to", len(n.host.Peerstore().Peers())-1, "libp2p peer(s)")
