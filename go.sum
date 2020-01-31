@@ -323,6 +323,8 @@ github.com/matrix-org/go-libp2p v0.5.1-0.20200131133740-7721e64610cd h1:Edly9JYu
 github.com/matrix-org/go-libp2p v0.5.1-0.20200131133740-7721e64610cd/go.mod h1:zpjzNsCIPB2B0LbI3vFkHCbl0X9APQ43nSqEdDzs4Bw=
 github.com/matrix-org/go-libp2p v0.5.1-0.20200131134212-84bfd87a494e h1:WTqEttKxj3HWcx68Pt9GhINy3ceJ2eH2CWgAFu47ajA=
 github.com/matrix-org/go-libp2p v0.5.1-0.20200131134212-84bfd87a494e/go.mod h1:MvLmPj46PUEKFY/NfkB3cEmfLyGRlLDtQTA9q6b8xUk=
+github.com/matrix-org/go-libp2p v0.5.1-0.20200131140346-8046eea784f2 h1:YX2Nll8uaZuuo8owIewyety9jI7mf6xgKetjI07mZmA=
+github.com/matrix-org/go-libp2p v0.5.1-0.20200131140346-8046eea784f2/go.mod h1:MvLmPj46PUEKFY/NfkB3cEmfLyGRlLDtQTA9q6b8xUk=
 github.com/matrix-org/go-libp2p v0.5.2-0.20200131133536-1a1cb84431b1 h1:tDHDaw1uxB6PEnBW0pd64vvV/nXUOp/wiHwOY5odVm8=
 github.com/matrix-org/go-libp2p v0.5.2-0.20200131133536-1a1cb84431b1/go.mod h1:MvLmPj46PUEKFY/NfkB3cEmfLyGRlLDtQTA9q6b8xUk=
 github.com/matrix-org/gomatrix v0.0.0-20190130130140-385f072fe9af h1:piaIBNQGIHnni27xRB7VKkEwoWCgAmeuYf8pxAyG0bI=
