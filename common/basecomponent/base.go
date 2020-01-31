@@ -36,7 +36,6 @@ import (
 	"github.com/matrix-org/go-libp2p"
 	"github.com/matrix-org/gomatrixserverlib"
 	"github.com/matrix-org/naffka"
-	"github.com/multiformats/go-multiaddr"
 
 	"github.com/matrix-org/dendrite/clientapi/auth/storage/accounts"
 	"github.com/matrix-org/dendrite/clientapi/auth/storage/devices"
@@ -101,7 +100,7 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 			panic(err)
 		}
 
-		defaultIP6ListenAddr, _ := multiaddr.NewMultiaddr("/ip6/::/tcp/0")
+		//defaultIP6ListenAddr, _ := multiaddr.NewMultiaddr("/ip6/::/tcp/0")
 
 		var libp2pdht *dht.IpfsDHT
 		libp2p, err := libp2p.New(ctx,
