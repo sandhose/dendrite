@@ -18,4 +18,4 @@ echo "Starting Riot"
 nginx
 
 # Wait forever
-tail -f /dev/null
+exec tail -f /dev/null
