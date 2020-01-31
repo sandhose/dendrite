@@ -106,8 +106,8 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 		var libp2pdht *dht.IpfsDHT
 		libp2p, err := libp2p.New(ctx,
 			libp2p.Identity(privKey),
-			//libp2p.DefaultListenAddrs,
-			libp2p.ListenAddrs(defaultIP6ListenAddr),
+			libp2p.DefaultListenAddrs,
+			//libp2p.ListenAddrs(defaultIP6ListenAddr),
 			libp2p.DefaultTransports,
 			libp2p.Routing(func(h host.Host) (r routing.PeerRouting, err error) {
 				libp2pdht, err = dht.New(ctx, h)
