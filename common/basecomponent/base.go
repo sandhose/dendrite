@@ -124,7 +124,7 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 			panic(err)
 		}
 
-		libp2ppubsub, err := pubsub.NewGossipSub(context.Background(), libp2p, []pubsub.Option{
+		libp2ppubsub, err := pubsub.NewFloodSub(context.Background(), libp2p, []pubsub.Option{
 			pubsub.WithMessageSigning(true),
 		}...)
 		if err != nil {
