@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/libp2p/go-libp2p"
 	circuit "github.com/libp2p/go-libp2p-circuit"
 	"github.com/libp2p/go-libp2p-core/peer"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -34,8 +33,10 @@ import (
 	routing "github.com/libp2p/go-libp2p-routing"
 	p2pdisc "github.com/libp2p/go-libp2p/p2p/discovery"
 	"github.com/matrix-org/dendrite/common/keydb"
+	"github.com/matrix-org/go-libp2p"
 	"github.com/matrix-org/gomatrixserverlib"
 	"github.com/matrix-org/naffka"
+	"github.com/multiformats/go-multiaddr"
 
 	"github.com/matrix-org/dendrite/clientapi/auth/storage/accounts"
 	"github.com/matrix-org/dendrite/clientapi/auth/storage/devices"
@@ -100,10 +101,13 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 			panic(err)
 		}
 
+		defaultIP6ListenAddr, _ := multiaddr.NewMultiaddr("/ip6/::/tcp/0")
+
 		var libp2pdht *dht.IpfsDHT
 		libp2p, err := libp2p.New(ctx,
 			libp2p.Identity(privKey),
-			libp2p.DefaultListenAddrs,
+			//libp2p.DefaultListenAddrs,
+			libp2p.ListenAddrs(defaultIP6ListenAddr),
 			libp2p.DefaultTransports,
 			libp2p.Routing(func(h host.Host) (r routing.PeerRouting, err error) {
 				libp2pdht, err = dht.New(ctx, h)
@@ -235,7 +239,7 @@ func (b *BaseDendrite) CreateKeyDB() keydb.Database {
 			keydb: db,
 		}
 		serv, err := p2pdisc.NewMdnsService(
-			context.Background(),
+			b.LibP2PContext,
 			b.LibP2P,
 			time.Second*10,
 			"_matrix-dendrite-p2p._tcp",
@@ -336,9 +340,9 @@ type mDNSListener struct {
 }
 
 func (n *mDNSListener) HandlePeerFound(p peer.AddrInfo) {
-	//fmt.Println("Found libp2p peer via mDNS:", p)
+	fmt.Println("Found libp2p peer via mDNS:", p)
 	if err := n.host.Connect(context.Background(), p); err == nil {
-		//	fmt.Println("Error adding peer via mDNS:", err)
+		fmt.Println("Error adding peer via mDNS:", err)
 	}
 	if pubkey, err := p.ID.ExtractPublicKey(); err == nil {
 		raw, _ := pubkey.Raw()
@@ -360,5 +364,8 @@ func (n *mDNSListener) HandlePeerFound(p peer.AddrInfo) {
 			fmt.Println("Failed to store keys:", err)
 		}
 	}
-	fmt.Println("Currently connected to", len(n.host.Peerstore().Peers())-1, "libp2p peer(s)")
+	fmt.Println("Currently connected to", len(n.host.Peerstore().Peers())-1, "other libp2p peer(s):")
+	for _, peer := range n.host.Peerstore().Peers() {
+		fmt.Println("-", peer)
+	}
 }
