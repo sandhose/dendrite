@@ -15,4 +15,7 @@ done
 
 # Start nginx
 echo "Starting Riot"
-nginx -g 'daemon off;'
+nginx
+
+# Wait forever
+tail -f /dev/null
