@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"time"
 
@@ -133,13 +134,6 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string) *BaseDendrite {
 
 		cfg.Matrix.ServerName = gomatrixserverlib.ServerName(libp2p.ID().String())
 
-		mdns := mDNSListener{host: libp2p}
-		serv, err := p2pdisc.NewMdnsService(ctx, libp2p, time.Second*10, "_matrix-dendrite-p2p._tcp")
-		if err != nil {
-			panic(err)
-		}
-		serv.RegisterNotifee(&mdns)
-
 		return &BaseDendrite{
 			componentName: componentName,
 			tracerCloser:  closer,
@@ -235,6 +229,22 @@ func (b *BaseDendrite) CreateKeyDB() keydb.Database {
 	if err != nil {
 		logrus.WithError(err).Panicf("failed to connect to keys db")
 	}
+	if b.LibP2P != nil {
+		mdns := mDNSListener{
+			host:  b.LibP2P,
+			keydb: db,
+		}
+		serv, err := p2pdisc.NewMdnsService(
+			context.Background(),
+			b.LibP2P,
+			time.Second*10,
+			"_matrix-dendrite-p2p._tcp",
+		)
+		if err != nil {
+			panic(err)
+		}
+		serv.RegisterNotifee(&mdns)
+	}
 
 	return db
 }
@@ -321,14 +331,34 @@ func setupKafka(cfg *config.Dendrite) (sarama.Consumer, sarama.SyncProducer) {
 }
 
 type mDNSListener struct {
-	host host.Host
+	keydb keydb.Database
+	host  host.Host
 }
 
 func (n *mDNSListener) HandlePeerFound(p peer.AddrInfo) {
 	//fmt.Println("Found libp2p peer via mDNS:", p)
 	if err := n.host.Connect(context.Background(), p); err == nil {
-		fmt.Println("Found peer with ID:", p.ID)
 		//	fmt.Println("Error adding peer via mDNS:", err)
+	}
+	if pubkey, err := p.ID.ExtractPublicKey(); err == nil {
+		raw, _ := pubkey.Raw()
+		if err := n.keydb.StoreKeys(
+			context.Background(),
+			map[gomatrixserverlib.PublicKeyLookupRequest]gomatrixserverlib.PublicKeyLookupResult{
+				gomatrixserverlib.PublicKeyLookupRequest{
+					ServerName: gomatrixserverlib.ServerName(p.ID.String()),
+					KeyID:      "ed25519:p2pdemo",
+				}: gomatrixserverlib.PublicKeyLookupResult{
+					VerifyKey: gomatrixserverlib.VerifyKey{
+						Key: gomatrixserverlib.Base64String(raw),
+					},
+					ValidUntilTS: math.MaxUint64 >> 1,
+					ExpiredTS:    gomatrixserverlib.PublicKeyNotExpired,
+				},
+			},
+		); err != nil {
+			fmt.Println("Failed to store keys:", err)
+		}
 	}
 	fmt.Println("Currently connected to", len(n.host.Peerstore().Peers())-1, "libp2p peer(s)")
 }
