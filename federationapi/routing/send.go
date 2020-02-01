@@ -162,9 +162,11 @@ func (t *txnReq) processEvent(e gomatrixserverlib.Event) error {
 	}
 
 	// Check that the event is allowed by the state at the event.
-	if err := checkAllowedByState(e, stateResp.StateEvents); err != nil {
-		return err
-	}
+	/*
+		if err := checkAllowedByState(e, stateResp.StateEvents); err != nil {
+			return err
+		}
+	*/
 
 	// TODO: Check that the roomserver has a copy of all of the auth_events.
 	// TODO: Check that the event is allowed by its auth_events.
