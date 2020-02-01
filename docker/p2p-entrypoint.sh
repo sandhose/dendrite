@@ -17,5 +17,12 @@ done
 echo "Starting Riot"
 nginx
 
+echo "Postgres and Riot are now running!"
+echo "Please start Dendrite using:"
+echo ""
+echo "  go run github.com/matrix-org/dendrite-p2p-demo -d 8081"
+echo ""
+echo "(assuming that the Postgres port 5432 has been mapped to 8081)"
+
 # Wait forever
 exec tail -f /dev/null
