@@ -20,9 +20,10 @@ nginx
 echo "Postgres and Riot are now running!"
 echo "Please start Dendrite using:"
 echo ""
-echo "  GO111MODULE=on go run github.com/matrix-org/dendrite-p2p-demo -d 8081"
+echo "  GO111MODULE=on go get github.com/matrix-org/dendrite-p2p-demo"
+echo "  \`go env GOPATH\`/bin/dendrite-p2p-demo -d 8081"
 echo ""
-echo "(assuming that the Postgres port 5432 has been mapped to 8081)"
+echo "https://matrix.org/~matthew/p2p-demo.html"
 
 # Wait forever
 exec tail -f /dev/null
