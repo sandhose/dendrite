@@ -363,7 +363,7 @@ func (n *mDNSListener) HandlePeerFound(p peer.AddrInfo) {
 			fmt.Println("Failed to store keys:", err)
 		}
 	}
-	fmt.Println("Currently connected to", len(n.host.Peerstore().Peers())-1, "other libp2p peer(s):")
+	fmt.Println("Discovered", len(n.host.Peerstore().Peers())-1, "other libp2p peer(s):")
 	for _, peer := range n.host.Peerstore().Peers() {
 		if peer != n.host.ID() {
 			fmt.Println("-", peer)
