@@ -136,12 +136,12 @@ func CreateRoom(
 	req *http.Request, device *authtypes.Device,
 	cfg config.Dendrite, producer *producers.RoomserverProducer,
 	accountDB *accounts.Database, aliasAPI roomserverAPI.RoomserverAliasAPI,
-	asAPI appserviceAPI.AppServiceQueryAPI,
+	asAPI appserviceAPI.AppServiceQueryAPI, queryAPI roomserverAPI.RoomserverQueryAPI,
 ) util.JSONResponse {
 	// TODO (#267): Check room ID doesn't clash with an existing one, and we
 	//              probably shouldn't be using pseudo-random strings, maybe GUIDs?
 	roomID := fmt.Sprintf("!%s:%s", util.RandomString(16), cfg.Matrix.ServerName)
-	return createRoom(req, device, cfg, roomID, producer, accountDB, aliasAPI, asAPI)
+	return createRoom(req, device, cfg, roomID, producer, accountDB, aliasAPI, asAPI, queryAPI)
 }
 
 // createRoom implements /createRoom
@@ -150,7 +150,7 @@ func createRoom(
 	req *http.Request, device *authtypes.Device,
 	cfg config.Dendrite, roomID string, producer *producers.RoomserverProducer,
 	accountDB *accounts.Database, aliasAPI roomserverAPI.RoomserverAliasAPI,
-	asAPI appserviceAPI.AppServiceQueryAPI,
+	asAPI appserviceAPI.AppServiceQueryAPI, queryAPI roomserverAPI.RoomserverQueryAPI,
 ) util.JSONResponse {
 	logger := util.GetLogger(req.Context())
 	userID := device.UserID
@@ -179,8 +179,17 @@ func createRoom(
 		r.CreationContent = make(map[string]interface{}, 2)
 	}
 
+	// Find out what the default room version is for the server
+	var roomVersionsQueryReq roomserverAPI.QueryRoomVersionCapabilitiesRequest
+	var roomVersionsQueryRes roomserverAPI.QueryRoomVersionCapabilitiesResponse
+	if err := queryAPI.QueryRoomVersionCapabilities(
+		req.Context(), &roomVersionsQueryReq, &roomVersionsQueryRes,
+	); err != nil {
+		return httputil.LogThenError(req, err)
+	}
+
 	r.CreationContent["creator"] = userID
-	r.CreationContent["room_version"] = "1" // TODO: We set this to 1 before we support Room versioning
+	r.CreationContent["room_version"] = roomVersionsQueryRes.DefaultRoomVersion
 
 	// TODO: visibility/presets/raw initial state
 	// TODO: Create room alias association
