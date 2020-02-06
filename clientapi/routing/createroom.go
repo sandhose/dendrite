@@ -182,7 +182,7 @@ func createRoom(
 	// Find out what the default room version is for the server
 	var roomVersionsQueryReq roomserverAPI.QueryRoomVersionCapabilitiesRequest
 	var roomVersionsQueryRes roomserverAPI.QueryRoomVersionCapabilitiesResponse
-	if err := queryAPI.QueryRoomVersionCapabilities(
+	if err = queryAPI.QueryRoomVersionCapabilities(
 		req.Context(), &roomVersionsQueryReq, &roomVersionsQueryRes,
 	); err != nil {
 		return httputil.LogThenError(req, err)
