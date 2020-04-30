@@ -79,8 +79,9 @@ func AddPrevEventsToEvent(
 
 	// Ask the roomserver for information about this room
 	queryReq := api.QueryLatestEventsAndStateRequest{
-		RoomID:       builder.RoomID,
-		StateToFetch: eventsNeeded.Tuples(),
+		RoomID:                 builder.RoomID,
+		StateToFetch:           eventsNeeded.Tuples(),
+		AllowFetchPartialState: true,
 	}
 	if err = queryAPI.QueryLatestEventsAndState(ctx, &queryReq, queryRes); err != nil {
 		return fmt.Errorf("queryAPI.QueryLatestEventsAndState: %w", err)

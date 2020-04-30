@@ -82,8 +82,21 @@ func (r *RoomserverQueryAPI) QueryLatestEventsAndState(
 		stateEntries, err = roomState.LoadStateAtSnapshot(
 			ctx, currentStateSnapshotNID,
 		)
+	} else if request.AllowFetchPartialState {
+		// If we are allowed to fetch partial state then try each key
+		// individually. This lets us ignore errors and not abort the
+		// whole operation just because some keys are missing.
+		for _, stateToFetch := range request.StateToFetch {
+			if stateEntry, stateErr := roomState.LoadStateAtSnapshotForStringTuples(
+				ctx, currentStateSnapshotNID, []gomatrixserverlib.StateKeyTuple{stateToFetch},
+			); stateErr == nil {
+				stateEntries = append(stateEntries, stateEntry...)
+			}
+		}
 	} else {
-		// Look up the current state for the requested tuples.
+		// If we are not allowed to fetch partial state then try all
+		// of the keys at once and return an error if any of them do not
+		// exist.
 		stateEntries, err = roomState.LoadStateAtSnapshotForStringTuples(
 			ctx, currentStateSnapshotNID, request.StateToFetch,
 		)

@@ -34,6 +34,10 @@ type QueryLatestEventsAndStateRequest struct {
 	// The state key tuples to fetch from the room current state.
 	// If this list is empty or nil then no state events are returned.
 	StateToFetch []gomatrixserverlib.StateKeyTuple `json:"state_to_fetch"`
+	// Normally this query will only return state if all of the requested
+	// keys exist. Setting AllowFetchPartialState to true will bypass this
+	// rule, returning the tuples that exist and ignoring those that don't.
+	AllowFetchPartialState bool `json:"allow_fetch_partial_state"`
 }
 
 // QueryLatestEventsAndStateResponse is a response to QueryLatestEventsAndState
