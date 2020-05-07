@@ -90,7 +90,11 @@ func (s *ServerStatistics) Failure() bool {
 	// backoff based on how many times we have failed already. The
 	// worker goroutine will wait until this time before processing
 	// anything from the queue.
-	backoffSeconds := time.Second * time.Duration(math.Exp2(float64(failCounter)))
+	backoffThreshold := failCounter - 5
+	if backoffThreshold < 0 {
+		backoffThreshold = 0
+	}
+	backoffSeconds := time.Second * time.Duration(math.Exp2(float64(backoffThreshold)))
 	s.backoffUntil.Store(
 		time.Now().Add(backoffSeconds),
 	)

@@ -55,6 +55,7 @@ type destinationQueue struct {
 func (oq *destinationQueue) sendEvent(ev *gomatrixserverlib.HeaderedEvent) {
 	if oq.statistics.Blacklisted() {
 		// If the destination is blacklisted then drop the event.
+		logrus.WithField("server_name", oq.destination).Infof("Dropping PDU as server is blacklisted")
 		return
 	}
 	if !oq.running.Load() {
@@ -69,6 +70,7 @@ func (oq *destinationQueue) sendEvent(ev *gomatrixserverlib.HeaderedEvent) {
 func (oq *destinationQueue) sendEDU(ev *gomatrixserverlib.EDU) {
 	if oq.statistics.Blacklisted() {
 		// If the destination is blacklisted then drop the event.
+		logrus.WithField("server_name", oq.destination).Infof("Dropping EDU as server is blacklisted")
 		return
 	}
 	if !oq.running.Load() {
@@ -83,6 +85,7 @@ func (oq *destinationQueue) sendEDU(ev *gomatrixserverlib.EDU) {
 func (oq *destinationQueue) sendInvite(ev *gomatrixserverlib.InviteV2Request) {
 	if oq.statistics.Blacklisted() {
 		// If the destination is blacklisted then drop the event.
+		logrus.WithField("server_name", oq.destination).Infof("Dropping invite as server is blacklisted")
 		return
 	}
 	if !oq.running.Load() {
@@ -136,6 +139,7 @@ func (oq *destinationQueue) backgroundSend() {
 		// If we are backing off this server then wait for the
 		// backoff duration to complete first.
 		if backoff, duration := oq.statistics.BackoffDuration(); backoff {
+			logrus.WithField("server_name", oq.destination).Info("Backing off for", duration)
 			<-time.After(duration)
 		}
 
