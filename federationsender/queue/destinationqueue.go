@@ -139,7 +139,7 @@ func (oq *destinationQueue) backgroundSend() {
 		// If we are backing off this server then wait for the
 		// backoff duration to complete first.
 		if backoff, duration := oq.statistics.BackoffDuration(); backoff {
-			logrus.WithField("server_name", oq.destination).Info("Backing off for", duration)
+			logrus.WithField("server_name", oq.destination).Info("Backing off for ", duration)
 			<-time.After(duration)
 		}
 
