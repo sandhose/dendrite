@@ -84,9 +84,14 @@ func processRoomEvent(
 		return event.EventID(), nil
 	}
 
-	if stateAtEvent.BeforeStateSnapshotNID == 0 {
-		// We haven't calculated a state for this event yet.
-		// Lets calculate one.
+	if stateAtEvent.BeforeStateSnapshotNID == 0 || (input.Kind == api.KindNew && input.HasState) {
+		// Either we haven't calculated state for this event yet, or we've been
+		// supplied with a complete state snapshot to use instead.
+		// We'll usually be supplied with a complete state snapshot in response to
+		// a send_join when joining a federated room. Since we don't ultimately
+		// know if our own state is still valid (it might be that we left the room
+		// for a while) we will instead create a snapshot from the supplied state
+		// and use that instead.
 		err = calculateAndSetState(ctx, db, input, roomNID, &stateAtEvent, event)
 		if err != nil {
 			return
