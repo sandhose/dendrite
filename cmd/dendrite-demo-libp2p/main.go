@@ -177,6 +177,7 @@ func main() {
 		http.DefaultServeMux,
 		base.Base.PublicAPIMux,
 		base.Base.InternalAPIMux,
+		base.Base.AdminAPIMux,
 		&cfg,
 		base.Base.UseHTTPAPIs,
 	)

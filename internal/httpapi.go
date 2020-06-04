@@ -222,9 +222,12 @@ func (f *FederationWakeups) Wakeup(ctx context.Context, origin gomatrixserverlib
 
 // SetupHTTPAPI registers an HTTP API mux under /api and sets up a metrics
 // listener.
-func SetupHTTPAPI(servMux *http.ServeMux, publicApiMux *mux.Router, internalApiMux *mux.Router, cfg *config.Dendrite, enableHTTPAPIs bool) {
+func SetupHTTPAPI(servMux *http.ServeMux, publicApiMux *mux.Router, internalApiMux *mux.Router, adminApiMux *mux.Router, cfg *config.Dendrite, enableHTTPAPIs bool) {
 	if cfg.Metrics.Enabled {
 		servMux.Handle("/metrics", WrapHandlerInBasicAuth(promhttp.Handler(), cfg.Metrics.BasicAuth))
+	}
+	if cfg.Admin.Enabled {
+		servMux.Handle(httpapis.AdminPathPrefix, WrapHandlerInBasicAuth(adminApiMux, cfg.Admin.BasicAuth))
 	}
 	if enableHTTPAPIs {
 		servMux.Handle(httpapis.InternalPathPrefix, internalApiMux)
@@ -235,7 +238,7 @@ func SetupHTTPAPI(servMux *http.ServeMux, publicApiMux *mux.Router, internalApiM
 // WrapHandlerInBasicAuth adds basic auth to a handler. Only used for /metrics
 func WrapHandlerInBasicAuth(h http.Handler, b BasicAuth) http.HandlerFunc {
 	if b.Username == "" || b.Password == "" {
-		logrus.Warn("Metrics are exposed without protection. Make sure you set up protection at proxy level.")
+		logrus.Warn("Basic auth endpoints are exposed without protection. Make sure you set up protection at proxy level.")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Serve without authorization if either Username or Password is unset

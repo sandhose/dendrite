@@ -122,6 +122,19 @@ type Dendrite struct {
 		ThumbnailSizes []ThumbnailSize `yaml:"thumbnail_sizes"`
 	} `yaml:"media"`
 
+	// The configuration to use for admin endpoints
+	Admin struct {
+		// Whether or not the admin APIs are enabled
+		Enabled bool `yaml:"enabled"`
+		// Use BasicAuth for Authorization
+		BasicAuth struct {
+			// Authorization via Static Username & Password
+			// Hardcoded Username and Password
+			Username string `yaml:"username"`
+			Password string `yaml:"password"`
+		} `yaml:"basic_auth"`
+	} `yaml:"admin"`
+
 	// The configuration to use for Prometheus metrics
 	Metrics struct {
 		// Whether or not the metrics are enabled

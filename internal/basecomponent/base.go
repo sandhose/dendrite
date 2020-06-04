@@ -57,12 +57,11 @@ import (
 // should only be used during start up.
 // Must be closed when shutting down.
 type BaseDendrite struct {
-	componentName string
-	tracerCloser  io.Closer
-
-	// PublicAPIMux should be used to register new public matrix api endpoints
-	PublicAPIMux   *mux.Router
-	InternalAPIMux *mux.Router
+	componentName  string
+	tracerCloser   io.Closer
+	PublicAPIMux   *mux.Router // Public Matrix endpoints
+	InternalAPIMux *mux.Router // Internal communication between components
+	AdminAPIMux    *mux.Router // Authenticated sysadmin-facing endpoints
 	UseHTTPAPIs    bool
 	httpClient     *http.Client
 	Cfg            *config.Dendrite
@@ -129,6 +128,7 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string, useHTTPAPIs boo
 		ImmutableCache: cache,
 		PublicAPIMux:   httpmux.PathPrefix(httpapis.PublicPathPrefix).Subrouter().UseEncodedPath(),
 		InternalAPIMux: httpmux.PathPrefix(httpapis.InternalPathPrefix).Subrouter().UseEncodedPath(),
+		AdminAPIMux:    httpmux.PathPrefix(httpapis.AdminPathPrefix).Subrouter().UseEncodedPath(),
 		httpClient:     &client,
 		KafkaConsumer:  kafkaConsumer,
 		KafkaProducer:  kafkaProducer,
@@ -241,6 +241,7 @@ func (b *BaseDendrite) SetupAndServeHTTP(bindaddr string, listenaddr string) {
 		http.DefaultServeMux,
 		b.PublicAPIMux,
 		b.InternalAPIMux,
+		b.AdminAPIMux,
 		b.Cfg,
 		b.UseHTTPAPIs,
 	)
