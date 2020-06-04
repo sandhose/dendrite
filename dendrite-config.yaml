@@ -63,14 +63,24 @@ media:
         height: 600
         method: scale
 
+# Special administrative endpoints for sysadmins
+admin:
+    # Whether or not admin APIs are enabled
+    enabled: false
+	# Basic auth to protect the admin APIs.
+    basic_auth:
+      username: adminUser
+      password: y0ursecr3tPa$$w0rd
+
 # Metrics config for Prometheus
 metrics:
     # Whether or not metrics are enabled
     enabled: false
-    # Use basic auth to protect the metrics. Uncomment to the complete block to enable.
+	# Optionally use basic auth to protect the metrics. Uncomment to the
+	# complete block to enable basic auth.
     #basic_auth:
     #  username: prometheusUser
-    #  password: y0ursecr3tPa$$w0rd
+	#  password: y0ursecr3tPa$$w0rd
 
 # The config for the TURN server
 turn:

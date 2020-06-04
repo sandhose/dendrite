@@ -76,7 +76,7 @@ func TestWrapHandlerInBasicAuth(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			baHandler := WrapHandlerInBasicAuth(tt.args.h, tt.args.b)
+			baHandler := WrapHandlerInBasicAuth(tt.args.h, tt.args.b, false)
 
 			req := httptest.NewRequest("GET", "http://localhost/metrics", nil)
 			if tt.reqAuth {
