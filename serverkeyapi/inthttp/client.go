@@ -94,8 +94,8 @@ func (s *httpServerKeyInternalAPI) FetchKeys(
 	for req, ts := range requests {
 		if res, ok := s.cache.GetServerKey(req); ok {
 			if now > res.ValidUntilTS && res.ExpiredTS == gomatrixserverlib.PublicKeyNotExpired {
-				// Don't trust the keys from the cache if they are past their validit
-				// period - rerequest them specifically.
+				// Don't trust the keys from the cache if they are past their validity
+				// period - re-request them specifically.
 				continue
 			}
 			result[req] = res
