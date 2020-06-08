@@ -39,3 +39,12 @@ var (
 		},
 	)
 )
+
+func init() {
+	// Register prometheus metrics. They must be registered to be exposed.
+	prometheus.MustRegister(metricSendTransactionDuration)
+	prometheus.MustRegister(metricSendTransactionRxPDUs)
+	prometheus.MustRegister(metricSendTransactionSuccessfulPDUs)
+	prometheus.MustRegister(metricSendTransactionFailedPDUs)
+	prometheus.MustRegister(metricSendTransactionRxEDUs)
+}
