@@ -49,11 +49,16 @@ func (s *ServerKeyAPI) FetchKeys(
 		// We successfully got some keys. Add them to the results and
 		// remove them from the request list.
 		for req, res := range dbResults {
-			if now > res.ValidUntilTS && res.ExpiredTS == gomatrixserverlib.PublicKeyNotExpired {
-				continue
-			}
 			results[req] = res
-			delete(requests, req)
+			if now <= res.ValidUntilTS && res.ExpiredTS == gomatrixserverlib.PublicKeyNotExpired {
+				// We're still within the validity threshold so we shouldn't
+				// need to rerequest the key.
+				delete(requests, req)
+			} else if res.ExpiredTS != gomatrixserverlib.PublicKeyNotExpired {
+				// The key is marked as fully expired, so don't bother trying
+				// to rerequest it.
+				delete(requests, req)
+			}
 		}
 	}
 	// For any key requests that we still have outstanding, next try to
