@@ -72,7 +72,7 @@ func Send(
 	t.TransactionID = txnID
 	t.Destination = cfg.Matrix.ServerName
 
-	metricSendTransactionRxPDUs.WithLabelValues("total").Observe(float64(len(t.PDUs)))
+	metricSendTransactionRxPDUs.With(prometheus.Labels{"result": "total"}).Observe(float64(len(t.PDUs)))
 	metricSendTransactionRxEDUs.Observe(float64(len(t.EDUs)))
 
 	util.GetLogger(httpReq.Context()).Infof("Received transaction %q containing %d PDUs, %d EDUs", txnID, len(t.PDUs), len(t.EDUs))
@@ -199,8 +199,8 @@ func (t *txnReq) processTransaction() (*gomatrixserverlib.RespSend, error) {
 		}
 	}
 
-	metricSendTransactionRxPDUs.WithLabelValues("successful").Observe(float64(pdusSuccessful))
-	metricSendTransactionRxPDUs.WithLabelValues("failed").Observe(float64(pdusFailed))
+	metricSendTransactionRxPDUs.With(prometheus.Labels{"result": "successful"}).Observe(float64(pdusSuccessful))
+	metricSendTransactionRxPDUs.With(prometheus.Labels{"result": "failed"}).Observe(float64(pdusFailed))
 
 	t.processEDUs(t.EDUs)
 	util.GetLogger(t.context).Infof("Processed %d PDUs from transaction %q", len(results), t.TransactionID)

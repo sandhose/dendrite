@@ -17,7 +17,7 @@ var (
 			Name:      "transaction_pdus",
 		},
 		[]string{
-			"total", "successful", "failed",
+			"result",
 		},
 	)
 	metricSendTransactionRxEDUs = prometheus.NewHistogram(
