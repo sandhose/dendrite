@@ -3,11 +3,12 @@ package routing
 import "github.com/prometheus/client_golang/prometheus"
 
 var (
-	metricSendTransactionDuration = prometheus.NewSummary(
-		prometheus.SummaryOpts{
+	metricSendTransactionDuration = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
 			Namespace: "dendrite",
 			Subsystem: "federationapi",
 			Name:      "transaction_duration",
+			Buckets:   prometheus.LinearBuckets(0.0, 1.0, 30),
 		},
 	)
 	metricSendTransactionRxPDUs = prometheus.NewHistogramVec(
@@ -15,18 +16,21 @@ var (
 			Namespace: "dendrite",
 			Subsystem: "federationapi",
 			Name:      "transaction_pdus",
-			Buckets:   prometheus.LinearBuckets(0.0, 1.0, 128),
+			Buckets:   []float64{},
 		},
 		[]string{
 			"result",
 		},
 	)
-	metricSendTransactionRxEDUs = prometheus.NewHistogram(
+	metricSendTransactionRxEDUs = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "dendrite",
 			Subsystem: "federationapi",
 			Name:      "transaction_edus",
-			Buckets:   prometheus.LinearBuckets(0.0, 1.0, 128),
+			Buckets:   []float64{},
+		},
+		[]string{
+			"result",
 		},
 	)
 )
