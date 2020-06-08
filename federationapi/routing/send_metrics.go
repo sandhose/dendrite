@@ -15,6 +15,7 @@ var (
 			Namespace: "dendrite",
 			Subsystem: "federationapi",
 			Name:      "transaction_pdus",
+			Buckets:   prometheus.LinearBuckets(0.0, 1.0, 128),
 		},
 		[]string{
 			"result",
@@ -25,6 +26,7 @@ var (
 			Namespace: "dendrite",
 			Subsystem: "federationapi",
 			Name:      "transaction_edus",
+			Buckets:   prometheus.LinearBuckets(0.0, 1.0, 128),
 		},
 	)
 )
