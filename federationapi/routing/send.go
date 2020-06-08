@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/matrix-org/dendrite/clientapi/jsonerror"
 	"github.com/matrix-org/dendrite/clientapi/producers"
@@ -71,13 +72,19 @@ func Send(
 	t.TransactionID = txnID
 	t.Destination = cfg.Matrix.ServerName
 
+	metricSendTransactionRxPDUs.Observe(float64(len(t.PDUs)))
+	metricSendTransactionRxEDUs.Observe(float64(len(t.EDUs)))
+
 	util.GetLogger(httpReq.Context()).Infof("Received transaction %q containing %d PDUs, %d EDUs", txnID, len(t.PDUs), len(t.EDUs))
 
+	txStartTime := time.Now()
 	resp, err := t.processTransaction()
 	if err != nil {
 		util.GetLogger(httpReq.Context()).WithError(err).Error("t.processTransaction failed")
 		return util.ErrorResponse(err)
 	}
+	txDuration := time.Since(txStartTime)
+	metricSendTransactionDuration.Observe(txDuration.Seconds())
 
 	// https://matrix.org/docs/spec/server_server/r0.1.3#put-matrix-federation-v1-send-txnid
 	// Status code 200:
@@ -156,8 +163,10 @@ func (t *txnReq) processTransaction() (*gomatrixserverlib.RespSend, error) {
 	}
 
 	// Process the events.
+	var pdusSuccessful, pdusFailed int
 	for _, e := range pdus {
 		if err := t.processEvent(e.Unwrap(), true); err != nil {
+			pdusFailed++
 			// If the error is due to the event itself being bad then we skip
 			// it and move onto the next event. We report an error so that the
 			// sender knows that we have skipped processing it.
@@ -185,9 +194,13 @@ func (t *txnReq) processTransaction() (*gomatrixserverlib.RespSend, error) {
 				}
 			}
 		} else {
+			pdusSuccessful++
 			results[e.EventID()] = gomatrixserverlib.PDUResult{}
 		}
 	}
+
+	metricSendTransactionSuccessfulPDUs.Observe(float64(pdusSuccessful))
+	metricSendTransactionFailedPDUs.Observe(float64(pdusFailed))
 
 	t.processEDUs(t.EDUs)
 	util.GetLogger(t.context).Infof("Processed %d PDUs from transaction %q", len(results), t.TransactionID)
