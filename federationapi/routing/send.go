@@ -73,7 +73,7 @@ func Send(
 	t.Destination = cfg.Matrix.ServerName
 
 	metricSendTransactionRxPDUs.With(prometheus.Labels{"result": "total"}).Observe(float64(len(t.PDUs)))
-	metricSendTransactionRxEDUs.Observe(float64(len(t.EDUs)))
+	metricSendTransactionRxEDUs.With(prometheus.Labels{"result": "total"}).Observe(float64(len(t.EDUs)))
 
 	util.GetLogger(httpReq.Context()).Infof("Received transaction %q containing %d PDUs, %d EDUs", txnID, len(t.PDUs), len(t.EDUs))
 
