@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/matrix-org/dendrite/clientapi/jsonerror"
 	"github.com/matrix-org/dendrite/clientapi/producers"
@@ -27,6 +26,7 @@ import (
 	"github.com/matrix-org/dendrite/roomserver/api"
 	"github.com/matrix-org/gomatrixserverlib"
 	"github.com/matrix-org/util"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -72,19 +72,19 @@ func Send(
 	t.TransactionID = txnID
 	t.Destination = cfg.Matrix.ServerName
 
-	metricSendTransactionRxPDUs.Observe(float64(len(t.PDUs)))
+	metricSendTransactionRxPDUs.WithLabelValues("total").Observe(float64(len(t.PDUs)))
 	metricSendTransactionRxEDUs.Observe(float64(len(t.EDUs)))
 
 	util.GetLogger(httpReq.Context()).Infof("Received transaction %q containing %d PDUs, %d EDUs", txnID, len(t.PDUs), len(t.EDUs))
 
-	txStartTime := time.Now()
+	txDuration := prometheus.NewTimer(metricSendTransactionDuration)
+	defer txDuration.ObserveDuration()
+
 	resp, err := t.processTransaction()
 	if err != nil {
 		util.GetLogger(httpReq.Context()).WithError(err).Error("t.processTransaction failed")
 		return util.ErrorResponse(err)
 	}
-	txDuration := time.Since(txStartTime)
-	metricSendTransactionDuration.Observe(txDuration.Seconds())
 
 	// https://matrix.org/docs/spec/server_server/r0.1.3#put-matrix-federation-v1-send-txnid
 	// Status code 200:
@@ -199,8 +199,8 @@ func (t *txnReq) processTransaction() (*gomatrixserverlib.RespSend, error) {
 		}
 	}
 
-	metricSendTransactionSuccessfulPDUs.Observe(float64(pdusSuccessful))
-	metricSendTransactionFailedPDUs.Observe(float64(pdusFailed))
+	metricSendTransactionRxPDUs.WithLabelValues("successful").Observe(float64(pdusSuccessful))
+	metricSendTransactionRxPDUs.WithLabelValues("failed").Observe(float64(pdusFailed))
 
 	t.processEDUs(t.EDUs)
 	util.GetLogger(t.context).Infof("Processed %d PDUs from transaction %q", len(results), t.TransactionID)
