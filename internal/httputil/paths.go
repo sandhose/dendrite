@@ -19,5 +19,7 @@ const (
 	PublicFederationPathPrefix = "/_matrix/federation/"
 	PublicKeyPathPrefix        = "/_matrix/key/"
 	PublicMediaPathPrefix      = "/_matrix/media/"
+	PublicWellKnownPathPrefix  = "/.well-known/"
+	PublicAuthPathPrefix       = "/_dendrite/oauth2/"
 	InternalPathPrefix         = "/api/"
 )

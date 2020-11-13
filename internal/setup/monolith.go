@@ -17,6 +17,7 @@ package setup
 import (
 	"github.com/gorilla/mux"
 	appserviceAPI "github.com/matrix-org/dendrite/appservice/api"
+	"github.com/matrix-org/dendrite/authapi"
 	"github.com/matrix-org/dendrite/clientapi"
 	"github.com/matrix-org/dendrite/clientapi/api"
 	eduServerAPI "github.com/matrix-org/dendrite/eduserver/api"
@@ -31,6 +32,7 @@ import (
 	"github.com/matrix-org/dendrite/syncapi"
 	userapi "github.com/matrix-org/dendrite/userapi/api"
 	"github.com/matrix-org/dendrite/userapi/storage/accounts"
+	"github.com/matrix-org/dendrite/wellknownapi"
 	"github.com/matrix-org/gomatrixserverlib"
 )
 
@@ -56,7 +58,8 @@ type Monolith struct {
 }
 
 // AddAllPublicRoutes attaches all public paths to the given router
-func (m *Monolith) AddAllPublicRoutes(csMux, ssMux, keyMux, mediaMux *mux.Router) {
+func (m *Monolith) AddAllPublicRoutes(authMux, csMux, ssMux, keyMux, mediaMux, wkMux *mux.Router) {
+	authapi.AddPublicRoutes(authMux, &m.Config.AuthAPI)
 	clientapi.AddPublicRoutes(
 		csMux, &m.Config.ClientAPI, m.AccountDB,
 		m.FedClient, m.RoomserverAPI,
@@ -73,4 +76,5 @@ func (m *Monolith) AddAllPublicRoutes(csMux, ssMux, keyMux, mediaMux *mux.Router
 		csMux, m.UserAPI, m.RoomserverAPI,
 		m.KeyAPI, m.FedClient, &m.Config.SyncAPI,
 	)
+	wellknownapi.AddPublicRoutes(wkMux, &m.Config.WellKnownAPI)
 }

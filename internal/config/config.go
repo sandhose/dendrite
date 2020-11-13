@@ -55,6 +55,7 @@ type Dendrite struct {
 
 	Global           Global           `yaml:"global"`
 	AppServiceAPI    AppServiceAPI    `yaml:"app_service_api"`
+	AuthAPI          AuthAPI          `yaml:"auth_api"`
 	ClientAPI        ClientAPI        `yaml:"client_api"`
 	EDUServer        EDUServer        `yaml:"edu_server"`
 	FederationAPI    FederationAPI    `yaml:"federation_api"`
@@ -65,6 +66,7 @@ type Dendrite struct {
 	SigningKeyServer SigningKeyServer `yaml:"signing_key_server"`
 	SyncAPI          SyncAPI          `yaml:"sync_api"`
 	UserAPI          UserAPI          `yaml:"user_api"`
+	WellKnownAPI     WellKnownAPI     `yaml:"well_known_api"`
 
 	MSCs MSCs `yaml:"mscs"`
 
@@ -297,6 +299,7 @@ func (c *Dendrite) Defaults() {
 	c.Version = 1
 
 	c.Global.Defaults()
+	c.AuthAPI.Defaults()
 	c.ClientAPI.Defaults()
 	c.EDUServer.Defaults()
 	c.FederationAPI.Defaults()
@@ -307,6 +310,7 @@ func (c *Dendrite) Defaults() {
 	c.SigningKeyServer.Defaults()
 	c.SyncAPI.Defaults()
 	c.UserAPI.Defaults()
+	c.WellKnownAPI.Defaults()
 	c.AppServiceAPI.Defaults()
 	c.MSCs.Defaults()
 
@@ -318,17 +322,18 @@ func (c *Dendrite) Verify(configErrs *ConfigErrors, isMonolith bool) {
 		Verify(configErrs *ConfigErrors, isMonolith bool)
 	}
 	for _, c := range []verifiable{
-		&c.Global, &c.ClientAPI,
+		&c.Global, &c.ClientAPI, &c.AuthAPI,
 		&c.EDUServer, &c.FederationAPI, &c.FederationSender,
 		&c.KeyServer, &c.MediaAPI, &c.RoomServer,
 		&c.SigningKeyServer, &c.SyncAPI, &c.UserAPI,
-		&c.AppServiceAPI, &c.MSCs,
+		&c.AppServiceAPI, &c.MSCs, &c.WellKnownAPI,
 	} {
 		c.Verify(configErrs, isMonolith)
 	}
 }
 
 func (c *Dendrite) Wiring() {
+	c.AuthAPI.Matrix = &c.Global
 	c.ClientAPI.Matrix = &c.Global
 	c.EDUServer.Matrix = &c.Global
 	c.FederationAPI.Matrix = &c.Global
@@ -339,6 +344,7 @@ func (c *Dendrite) Wiring() {
 	c.SigningKeyServer.Matrix = &c.Global
 	c.SyncAPI.Matrix = &c.Global
 	c.UserAPI.Matrix = &c.Global
+	c.WellKnownAPI.Matrix = &c.Global
 	c.AppServiceAPI.Matrix = &c.Global
 	c.MSCs.Matrix = &c.Global
 
@@ -492,6 +498,15 @@ func (config *Dendrite) AppServiceURL() string {
 	return string(config.AppServiceAPI.InternalAPI.Connect)
 }
 
+// AuthAPIURL returns an HTTP URL for where the AuthAPI is listening.
+func (config *Dendrite) AuthAPIURL() string {
+	// Hard code the AuthAPI to talk HTTP for now.
+	// If we support HTTPS we need to think of a practical way to do certificate validation.
+	// People setting up servers shouldn't need to get a certificate valid for the public
+	// internet for an internal API.
+	return string(config.AuthAPI.InternalAPI.Connect)
+}
+
 // RoomServerURL returns an HTTP URL for where the roomserver is listening.
 func (config *Dendrite) RoomServerURL() string {
 	// Hard code the roomserver to talk HTTP for now.
@@ -544,6 +559,15 @@ func (config *Dendrite) KeyServerURL() string {
 	// People setting up servers shouldn't need to get a certificate valid for the public
 	// internet for an internal API.
 	return string(config.KeyServer.InternalAPI.Connect)
+}
+
+// WellKnownAPIURL returns an HTTP URL for where the WellKnownAPI is listening.
+func (config *Dendrite) WellKnownAPIURL() string {
+	// Hard code the WellKnownAPI to talk HTTP for now.
+	// If we support HTTPS we need to think of a practical way to do certificate validation.
+	// People setting up servers shouldn't need to get a certificate valid for the public
+	// internet for an internal API.
+	return string(config.WellKnownAPI.InternalAPI.Connect)
 }
 
 // SetupTracing configures the opentracing using the supplied configuration.

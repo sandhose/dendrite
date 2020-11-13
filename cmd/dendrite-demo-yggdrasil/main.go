@@ -146,10 +146,12 @@ func main() {
 		),
 	}
 	monolith.AddAllPublicRoutes(
+		base.PublicAuthAPIMux,
 		base.PublicClientAPIMux,
 		base.PublicFederationAPIMux,
 		base.PublicKeyAPIMux,
 		base.PublicMediaAPIMux,
+		base.PublicWellKnownAPIMux,
 	)
 
 	httpRouter := mux.NewRouter().SkipClean(true).UseEncodedPath()

@@ -185,10 +185,12 @@ func main() {
 		ExtPublicRoomsProvider: provider,
 	}
 	monolith.AddAllPublicRoutes(
+		base.Base.PublicAuthAPIMux,
 		base.Base.PublicClientAPIMux,
 		base.Base.PublicFederationAPIMux,
 		base.Base.PublicKeyAPIMux,
 		base.Base.PublicMediaAPIMux,
+		base.Base.PublicWellKnownAPIMux,
 	)
 
 	httpRouter := mux.NewRouter().SkipClean(true).UseEncodedPath()

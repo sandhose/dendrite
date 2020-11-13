@@ -63,10 +63,12 @@ import (
 type BaseDendrite struct {
 	componentName          string
 	tracerCloser           io.Closer
+	PublicAuthAPIMux       *mux.Router
 	PublicClientAPIMux     *mux.Router
 	PublicFederationAPIMux *mux.Router
 	PublicKeyAPIMux        *mux.Router
 	PublicMediaAPIMux      *mux.Router
+	PublicWellKnownAPIMux  *mux.Router
 	InternalAPIMux         *mux.Router
 	UseHTTPAPIs            bool
 	apiHttpClient          *http.Client
@@ -153,9 +155,11 @@ func NewBaseDendrite(cfg *config.Dendrite, componentName string, useHTTPAPIs boo
 		Cfg:                    cfg,
 		Caches:                 cache,
 		PublicClientAPIMux:     mux.NewRouter().SkipClean(true).PathPrefix(httputil.PublicClientPathPrefix).Subrouter().UseEncodedPath(),
+		PublicAuthAPIMux:       mux.NewRouter().SkipClean(true).PathPrefix(httputil.PublicAuthPathPrefix).Subrouter().UseEncodedPath(),
 		PublicFederationAPIMux: mux.NewRouter().SkipClean(true).PathPrefix(httputil.PublicFederationPathPrefix).Subrouter().UseEncodedPath(),
 		PublicKeyAPIMux:        mux.NewRouter().SkipClean(true).PathPrefix(httputil.PublicKeyPathPrefix).Subrouter().UseEncodedPath(),
 		PublicMediaAPIMux:      mux.NewRouter().SkipClean(true).PathPrefix(httputil.PublicMediaPathPrefix).Subrouter().UseEncodedPath(),
+		PublicWellKnownAPIMux:  mux.NewRouter().SkipClean(true).PathPrefix(httputil.PublicWellKnownPathPrefix).Subrouter().UseEncodedPath(),
 		InternalAPIMux:         mux.NewRouter().SkipClean(true).PathPrefix(httputil.InternalPathPrefix).Subrouter().UseEncodedPath(),
 		apiHttpClient:          &apiClient,
 		httpClient:             &client,
@@ -307,10 +311,12 @@ func (b *BaseDendrite) SetupAndServeHTTP(
 		internalRouter.Handle("/metrics", httputil.WrapHandlerInBasicAuth(promhttp.Handler(), b.Cfg.Global.Metrics.BasicAuth))
 	}
 
+	externalRouter.PathPrefix(httputil.PublicAuthPathPrefix).Handler(b.PublicAuthAPIMux)
 	externalRouter.PathPrefix(httputil.PublicClientPathPrefix).Handler(b.PublicClientAPIMux)
 	externalRouter.PathPrefix(httputil.PublicKeyPathPrefix).Handler(b.PublicKeyAPIMux)
 	externalRouter.PathPrefix(httputil.PublicFederationPathPrefix).Handler(b.PublicFederationAPIMux)
 	externalRouter.PathPrefix(httputil.PublicMediaPathPrefix).Handler(b.PublicMediaAPIMux)
+	externalRouter.PathPrefix(httputil.PublicWellKnownPathPrefix).Handler(b.PublicWellKnownAPIMux)
 
 	if internalAddr != NoListener && internalAddr != externalAddr {
 		go func() {

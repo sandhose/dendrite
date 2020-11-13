@@ -143,10 +143,12 @@ func main() {
 		KeyAPI:              keyAPI,
 	}
 	monolith.AddAllPublicRoutes(
+		base.PublicAuthAPIMux,
 		base.PublicClientAPIMux,
 		base.PublicFederationAPIMux,
 		base.PublicKeyAPIMux,
 		base.PublicMediaAPIMux,
+		base.PublicWellKnownAPIMux,
 	)
 
 	if len(base.Cfg.MSCs.MSCs) > 0 {
