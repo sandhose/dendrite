@@ -6,11 +6,11 @@ import (
 	"github.com/matrix-org/util"
 )
 
-type jwk struct{
+type jwk struct {
 	Use string `json:"use,omitempty"`
 }
 
-type jwks struct{
+type jwks struct {
 	Keys []jwk `json:"keys"`
 }
 

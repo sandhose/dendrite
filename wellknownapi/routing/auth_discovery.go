@@ -69,15 +69,16 @@ func relative(u *url.URL, p string) *url.URL {
 }
 
 func documentForPrefix(prefix *url.URL) discoveryDocument {
-	opPrefix := relative(prefix, "." + httputil.PublicAuthPathPrefix)
+	opPrefix := relative(prefix, "."+httputil.PublicAuthPathPrefix)
 
 	return discoveryDocument{
 		Issuer:                            prefix.String(),
 		AuthorizationEndpoint:             relative(opPrefix, "./auth").String(),
 		TokenEndpoint:                     relative(opPrefix, "./token").String(),
+		RegistrationEndpoint:              relative(opPrefix, "./client/register").String(),
 		JWKSUri:                           relative(prefix, "./.well-known/jwks.json").String(),
 		ResponseTypesSupported:            []string{"code"},
-		ResponseModesSupported:            []string{"query", "fragment"},
+		ResponseModesSupported:            []string{"query", "fragment", "form_post"},
 		GrantTypesSupported:               []string{"authorization_code", "refresh_token"},
 		TokenEndpointAuthMethodsSupported: []string{"client_secret_post", "client_secret_basic", "none"},
 		CodeChallengeMethodsSupported:     []string{"none", "S256"},

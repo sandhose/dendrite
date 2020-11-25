@@ -44,6 +44,9 @@ type Global struct {
 
 	// Metrics configuration
 	Metrics Metrics `yaml:"metrics"`
+
+	// Auth issuer
+	Issuer string `yaml:"issuer"`
 }
 
 func (c *Global) Defaults() {
@@ -52,6 +55,7 @@ func (c *Global) Defaults() {
 	_, c.PrivateKey, _ = ed25519.GenerateKey(rand.New(rand.NewSource(0)))
 	c.KeyID = "ed25519:auto"
 	c.KeyValidityPeriod = time.Hour * 24 * 7
+	c.Issuer = "http://localhost:8008/"
 
 	c.Kafka.Defaults()
 	c.Metrics.Defaults()
@@ -60,6 +64,7 @@ func (c *Global) Defaults() {
 func (c *Global) Verify(configErrs *ConfigErrors, isMonolith bool) {
 	checkNotEmpty(configErrs, "global.server_name", string(c.ServerName))
 	checkNotEmpty(configErrs, "global.private_key", string(c.PrivateKeyPath))
+	checkURL(configErrs, "global.issuer", string(c.Issuer))
 
 	c.Kafka.Verify(configErrs, isMonolith)
 	c.Metrics.Verify(configErrs, isMonolith)

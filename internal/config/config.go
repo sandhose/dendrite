@@ -16,6 +16,7 @@ package config
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io"
@@ -256,6 +257,17 @@ func loadConfig(
 	}
 
 	c.MediaAPI.AbsBasePath = Path(absPath(basePath, c.MediaAPI.BasePath))
+
+	opPrivateKeyPath := absPath(basePath, c.AuthAPI.OPPrivateKeyPath)
+	opPrivateKeyData, err := readFile(opPrivateKeyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	opPrivateKeyPem, _ := pem.Decode(opPrivateKeyData)
+	if c.AuthAPI.OPPrivateKey, err = x509.ParsePKCS1PrivateKey(opPrivateKeyPem.Bytes); err != nil {
+		return nil, err
+	}
 
 	// Generate data from config options
 	err = c.Derive()
