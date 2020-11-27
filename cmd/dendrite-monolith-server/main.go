@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/matrix-org/dendrite/appservice"
+	"github.com/matrix-org/dendrite/authapi"
 	"github.com/matrix-org/dendrite/eduserver"
 	"github.com/matrix-org/dendrite/eduserver/cache"
 	"github.com/matrix-org/dendrite/federationsender"
@@ -109,8 +110,11 @@ func main() {
 	// This is different to rsAPI which can be the http client which doesn't need this dependency
 	rsImpl.SetFederationSenderAPI(fsAPI)
 
+	authDB, oauth2Provider := authapi.Init(&base.Cfg.AuthAPI)
+	authAPI := authapi.NewInternalAPI(&base.Cfg.AuthAPI, authDB, oauth2Provider)
+
 	keyAPI := keyserver.NewInternalAPI(&base.Cfg.KeyServer, fsAPI)
-	userAPI := userapi.NewInternalAPI(accountDB, &cfg.UserAPI, cfg.Derived.ApplicationServices, keyAPI)
+	userAPI := userapi.NewInternalAPI(accountDB, &cfg.UserAPI, cfg.Derived.ApplicationServices, keyAPI, authAPI)
 	keyAPI.SetUserAPI(userAPI)
 
 	eduInputAPI := eduserver.NewInternalAPI(
@@ -126,13 +130,16 @@ func main() {
 		appservice.AddInternalRoutes(base.InternalAPIMux, asAPI)
 		asAPI = base.AppserviceHTTPClient()
 	}
+	
 
 	monolith := setup.Monolith{
-		Config:    base.Cfg,
-		AccountDB: accountDB,
-		Client:    base.CreateClient(),
-		FedClient: federation,
-		KeyRing:   keyRing,
+		Config:         base.Cfg,
+		AccountDB:      accountDB,
+		AuthDB:         authDB,
+		OAuth2Provider: oauth2Provider,
+		Client:         base.CreateClient(),
+		FedClient:      federation,
+		KeyRing:        keyRing,
 
 		AppserviceAPI:       asAPI,
 		EDUInternalAPI:      eduInputAPI,

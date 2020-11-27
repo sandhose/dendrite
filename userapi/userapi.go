@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/matrix-org/dendrite/internal/config"
 	keyapi "github.com/matrix-org/dendrite/keyserver/api"
+	authapi "github.com/matrix-org/dendrite/authapi/api"
 	"github.com/matrix-org/dendrite/userapi/api"
 	"github.com/matrix-org/dendrite/userapi/internal"
 	"github.com/matrix-org/dendrite/userapi/inthttp"
@@ -35,7 +36,7 @@ func AddInternalRoutes(router *mux.Router, intAPI api.UserInternalAPI) {
 // NewInternalAPI returns a concerete implementation of the internal API. Callers
 // can call functions directly on the returned API or via an HTTP interface using AddInternalRoutes.
 func NewInternalAPI(
-	accountDB accounts.Database, cfg *config.UserAPI, appServices []config.ApplicationService, keyAPI keyapi.KeyInternalAPI,
+	accountDB accounts.Database, cfg *config.UserAPI, appServices []config.ApplicationService, keyAPI keyapi.KeyInternalAPI, authAPI authapi.AuthInternalAPI,
 ) api.UserInternalAPI {
 
 	deviceDB, err := devices.NewDatabase(&cfg.DeviceDatabase, cfg.Matrix.ServerName)
@@ -49,5 +50,6 @@ func NewInternalAPI(
 		ServerName:  cfg.Matrix.ServerName,
 		AppServices: appServices,
 		KeyAPI:      keyAPI,
+		AuthAPI:     authAPI,
 	}
 }

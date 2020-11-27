@@ -75,7 +75,7 @@ func documentForPrefix(prefix *url.URL) discoveryDocument {
 		Issuer:                            prefix.String(),
 		AuthorizationEndpoint:             relative(opPrefix, "./auth").String(),
 		TokenEndpoint:                     relative(opPrefix, "./token").String(),
-		RegistrationEndpoint:              relative(opPrefix, "./client/register").String(),
+		RegistrationEndpoint:              relative(opPrefix, "./clients/register").String(),
 		JWKSUri:                           relative(prefix, "./.well-known/jwks.json").String(),
 		ResponseTypesSupported:            []string{"code"},
 		ResponseModesSupported:            []string{"query", "fragment", "form_post"},

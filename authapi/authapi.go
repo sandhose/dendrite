@@ -7,18 +7,15 @@ import (
 	"github.com/ory/fosite/token/jwt"
 	"github.com/sirupsen/logrus"
 
+	"github.com/matrix-org/dendrite/authapi/api"
+	"github.com/matrix-org/dendrite/authapi/internal"
+	"github.com/matrix-org/dendrite/authapi/inthttp"
 	"github.com/matrix-org/dendrite/authapi/routing"
 	"github.com/matrix-org/dendrite/authapi/storage"
 	"github.com/matrix-org/dendrite/internal/config"
 )
 
-// AddPublicRoutes sets up and registers HTTP handlers for the AuthAPI component.
-func AddPublicRoutes(router *mux.Router, cfg *config.AuthAPI) {
-	db, err := storage.NewDatabase(&cfg.Database)
-	if err != nil {
-		logrus.WithError(err).Panicf("failed to create auth db")
-	}
-
+func NewProvider(db storage.Database, cfg *config.AuthAPI) fosite.OAuth2Provider {
 	config := &compose.Config{
 		EnforcePKCEForPublicClients: true,
 		RefreshTokenScopes:          []string{}, // Generate a refresh token for all scopes
@@ -39,7 +36,7 @@ func AddPublicRoutes(router *mux.Router, cfg *config.AuthAPI) {
 
 	storage := storage.WrapDatabase(db)
 
-	provider := compose.Compose(
+	return compose.Compose(
 		config,
 		storage,
 		strategy,
@@ -53,6 +50,30 @@ func AddPublicRoutes(router *mux.Router, cfg *config.AuthAPI) {
 
 		compose.OAuth2PKCEFactory,
 	)
+}
 
+func Init(cfg *config.AuthAPI) (storage.Database, fosite.OAuth2Provider) {
+	db, err := storage.NewDatabase(&cfg.Database)
+	if err != nil {
+		logrus.WithError(err).Panicf("failed to create auth db")
+	}
+
+	provider := NewProvider(db, cfg)
+
+	return db, provider
+}
+
+// AddInternalRoutes registers HTTP handlers for the internal API. Invokes functions
+// on the given input API.
+func AddInternalRoutes(router *mux.Router, intAPI api.AuthInternalAPI) {
+	inthttp.AddRoutes(router, intAPI)
+}
+
+// AddPublicRoutes sets up and registers HTTP handlers for the AuthAPI component.
+func AddPublicRoutes(router *mux.Router, cfg *config.AuthAPI, db storage.Database, provider fosite.OAuth2Provider) {
 	routing.Setup(router, cfg, db, provider)
+}
+
+func NewInternalAPI(_cfg *config.AuthAPI, _db storage.Database, provider fosite.OAuth2Provider) api.AuthInternalAPI {
+	return &internal.AuthInternalAPI{OAuth2Provider: provider}
 }

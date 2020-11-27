@@ -16,8 +16,11 @@ package setup
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/ory/fosite"
+
 	appserviceAPI "github.com/matrix-org/dendrite/appservice/api"
 	"github.com/matrix-org/dendrite/authapi"
+	authstorage "github.com/matrix-org/dendrite/authapi/storage"
 	"github.com/matrix-org/dendrite/clientapi"
 	"github.com/matrix-org/dendrite/clientapi/api"
 	eduServerAPI "github.com/matrix-org/dendrite/eduserver/api"
@@ -39,11 +42,13 @@ import (
 // Monolith represents an instantiation of all dependencies required to build
 // all components of Dendrite, for use in monolith mode.
 type Monolith struct {
-	Config    *config.Dendrite
-	AccountDB accounts.Database
-	KeyRing   *gomatrixserverlib.KeyRing
-	Client    *gomatrixserverlib.Client
-	FedClient *gomatrixserverlib.FederationClient
+	Config         *config.Dendrite
+	AccountDB      accounts.Database
+	AuthDB         authstorage.Database
+	OAuth2Provider fosite.OAuth2Provider
+	KeyRing        *gomatrixserverlib.KeyRing
+	Client         *gomatrixserverlib.Client
+	FedClient      *gomatrixserverlib.FederationClient
 
 	AppserviceAPI       appserviceAPI.AppServiceQueryAPI
 	EDUInternalAPI      eduServerAPI.EDUServerInputAPI
@@ -59,7 +64,7 @@ type Monolith struct {
 
 // AddAllPublicRoutes attaches all public paths to the given router
 func (m *Monolith) AddAllPublicRoutes(authMux, csMux, ssMux, keyMux, mediaMux, wkMux *mux.Router) {
-	authapi.AddPublicRoutes(authMux, &m.Config.AuthAPI)
+	authapi.AddPublicRoutes(authMux, &m.Config.AuthAPI, m.AuthDB, m.OAuth2Provider)
 	clientapi.AddPublicRoutes(
 		csMux, &m.Config.ClientAPI, m.AccountDB,
 		m.FedClient, m.RoomserverAPI,

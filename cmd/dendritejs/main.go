@@ -22,6 +22,7 @@ import (
 	"syscall/js"
 
 	"github.com/gorilla/mux"
+	"github.com/matrix-org/dendrite/authapi"
 	"github.com/matrix-org/dendrite/appservice"
 	"github.com/matrix-org/dendrite/eduserver"
 	"github.com/matrix-org/dendrite/eduserver/cache"
@@ -190,8 +191,12 @@ func main() {
 
 	accountDB := base.CreateAccountsDB()
 	federation := createFederationClient(cfg, node)
+
+	authDB, oauth2Provider := authapi.Init(&base.Cfg.AuthAPI)
+	authAPI := authapi.NewInternalAPI(&base.Cfg.AuthAPI, authDB, oauth2Provider)
+
 	keyAPI := keyserver.NewInternalAPI(&base.Cfg.KeyServer, federation)
-	userAPI := userapi.NewInternalAPI(accountDB, &cfg.UserAPI, nil, keyAPI)
+	userAPI := userapi.NewInternalAPI(accountDB, &cfg.UserAPI, nil, keyAPI, authAPI)
 	keyAPI.SetUserAPI(userAPI)
 
 	fetcher := &libp2pKeyFetcher{}

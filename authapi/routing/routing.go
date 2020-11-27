@@ -18,10 +18,10 @@ func Setup(
 	database storage.Database,
 	oauth2Provider fosite.OAuth2Provider,
 ) {
-	router.Handle("/token", httputil.MakeHTMLAPI("oauth_token", func(rw http.ResponseWriter, req *http.Request) *util.JSONResponse {
+	router.Handle("/token", httputil.WrapHandlerInCORS(httputil.MakeHTMLAPI("oauth_token", func(rw http.ResponseWriter, req *http.Request) *util.JSONResponse {
 		Token(rw, req, oauth2Provider)
 		return nil
-	})).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
+	}))).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
 	router.Handle("/auth", httputil.MakeHTMLAPI("oauth_auth", func(rw http.ResponseWriter, req *http.Request) *util.JSONResponse {
 		Authorize(rw, req, oauth2Provider)

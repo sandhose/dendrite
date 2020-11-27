@@ -28,6 +28,7 @@ import (
 	p2phttp "github.com/libp2p/go-libp2p-http"
 	p2pdisc "github.com/libp2p/go-libp2p/p2p/discovery"
 	"github.com/matrix-org/dendrite/appservice"
+	"github.com/matrix-org/dendrite/authapi"
 	"github.com/matrix-org/dendrite/cmd/dendrite-demo-yggdrasil/embed"
 	"github.com/matrix-org/dendrite/eduserver"
 	"github.com/matrix-org/dendrite/federationsender"
@@ -139,8 +140,12 @@ func main() {
 
 	accountDB := base.Base.CreateAccountsDB()
 	federation := createFederationClient(base)
+
+	authDB, oauth2Provider := authapi.Init(&cfg.AuthAPI)
+	authAPI := authapi.NewInternalAPI(&cfg.AuthAPI, authDB, oauth2Provider)
+
 	keyAPI := keyserver.NewInternalAPI(&base.Base.Cfg.KeyServer, federation)
-	userAPI := userapi.NewInternalAPI(accountDB, &cfg.UserAPI, nil, keyAPI)
+	userAPI := userapi.NewInternalAPI(accountDB, &cfg.UserAPI, nil, keyAPI, authAPI)
 	keyAPI.SetUserAPI(userAPI)
 
 	serverKeyAPI := signingkeyserver.NewInternalAPI(

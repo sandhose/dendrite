@@ -50,6 +50,8 @@ import (
 	skinthttp "github.com/matrix-org/dendrite/signingkeyserver/inthttp"
 	userapi "github.com/matrix-org/dendrite/userapi/api"
 	userapiinthttp "github.com/matrix-org/dendrite/userapi/inthttp"
+	authapi "github.com/matrix-org/dendrite/authapi/api"
+	authapiinthttp "github.com/matrix-org/dendrite/authapi/inthttp"
 	"github.com/sirupsen/logrus"
 
 	_ "net/http/pprof"
@@ -235,6 +237,15 @@ func (b *BaseDendrite) KeyServerHTTPClient() keyserverAPI.KeyInternalAPI {
 	f, err := keyinthttp.NewKeyServerClient(b.Cfg.KeyServerURL(), b.apiHttpClient)
 	if err != nil {
 		logrus.WithError(err).Panic("KeyServerHTTPClient failed", b.apiHttpClient)
+	}
+	return f
+}
+
+// AuthAPIHTTPClient returns AuthInternalAPI for hitting the auth API over HTTP
+func (b *BaseDendrite) AuthAPIHTTPClient() authapi.AuthInternalAPI {
+	f, err := authapiinthttp.NewAuthAPIClient(b.Cfg.AuthAPIURL(), b.apiHttpClient)
+	if err != nil {
+		logrus.WithError(err).Panic("AuthAPIHTTPClient failed", b.apiHttpClient)
 	}
 	return f
 }
