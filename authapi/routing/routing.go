@@ -10,6 +10,8 @@ import (
 	"github.com/matrix-org/dendrite/authapi/storage"
 	"github.com/matrix-org/dendrite/internal/config"
 	"github.com/matrix-org/dendrite/internal/httputil"
+	userapi "github.com/matrix-org/dendrite/userapi/api"
+	"github.com/matrix-org/dendrite/userapi/storage/accounts"
 )
 
 func Setup(
@@ -17,6 +19,8 @@ func Setup(
 	cfg *config.AuthAPI,
 	database storage.Database,
 	oauth2Provider fosite.OAuth2Provider,
+	accountDB accounts.Database,
+	userAPI userapi.UserInternalAPI,
 ) {
 	router.Handle("/token", httputil.WrapHandlerInCORS(httputil.MakeHTMLAPI("oauth_token", func(rw http.ResponseWriter, req *http.Request) *util.JSONResponse {
 		Token(rw, req, oauth2Provider)
@@ -24,7 +28,7 @@ func Setup(
 	}))).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
 	router.Handle("/auth", httputil.MakeHTMLAPI("oauth_auth", func(rw http.ResponseWriter, req *http.Request) *util.JSONResponse {
-		Authorize(rw, req, oauth2Provider, database)
+		Authorize(rw, req, oauth2Provider, database, accountDB, userAPI)
 		return nil
 	})).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 

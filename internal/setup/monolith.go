@@ -64,7 +64,7 @@ type Monolith struct {
 
 // AddAllPublicRoutes attaches all public paths to the given router
 func (m *Monolith) AddAllPublicRoutes(authMux, csMux, ssMux, keyMux, mediaMux, wkMux *mux.Router) {
-	authapi.AddPublicRoutes(authMux, &m.Config.AuthAPI, m.AuthDB, m.OAuth2Provider)
+	authapi.AddPublicRoutes(authMux, &m.Config.AuthAPI, m.AuthDB, m.OAuth2Provider, m.AccountDB, m.UserAPI)
 	clientapi.AddPublicRoutes(
 		csMux, &m.Config.ClientAPI, m.AccountDB,
 		m.FedClient, m.RoomserverAPI,

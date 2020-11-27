@@ -407,6 +407,35 @@ func (c *Client) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
 	}
+
+	if c.RedirectURIs == nil {
+		c.RedirectURIs = []*url.URL{}
+	}
+	if c.ResponseTypes == nil {
+		c.ResponseTypes = []ResponseType{}
+	}
+	if c.GrantTypes == nil {
+		c.GrantTypes = []GrantType{}
+	}
+	if c.Contacts == nil {
+		c.Contacts = []string{}
+	}
+	if c.ClientName == nil {
+		c.ClientName = I18nString{}
+	}
+	if c.LogoURI == nil {
+		c.LogoURI = I18nURI{}
+	}
+	if c.ClientURI == nil {
+		c.ClientURI = I18nURI{}
+	}
+	if c.PolicyURI == nil {
+		c.PolicyURI = I18nURI{}
+	}
+	if c.TOS_URI == nil {
+		c.TOS_URI = I18nURI{}
+	}
+
 	c.Fill(m)
 	return nil
 }

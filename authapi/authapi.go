@@ -13,6 +13,8 @@ import (
 	"github.com/matrix-org/dendrite/authapi/routing"
 	"github.com/matrix-org/dendrite/authapi/storage"
 	"github.com/matrix-org/dendrite/internal/config"
+	userapi "github.com/matrix-org/dendrite/userapi/api"
+	"github.com/matrix-org/dendrite/userapi/storage/accounts"
 )
 
 func NewProvider(db storage.Database, cfg *config.AuthAPI) fosite.OAuth2Provider {
@@ -72,8 +74,8 @@ func AddInternalRoutes(router *mux.Router, intAPI api.AuthInternalAPI) {
 }
 
 // AddPublicRoutes sets up and registers HTTP handlers for the AuthAPI component.
-func AddPublicRoutes(router *mux.Router, cfg *config.AuthAPI, db storage.Database, provider fosite.OAuth2Provider) {
-	routing.Setup(router, cfg, db, provider)
+func AddPublicRoutes(router *mux.Router, cfg *config.AuthAPI, db storage.Database, provider fosite.OAuth2Provider, accountDB accounts.Database, userAPI userapi.UserInternalAPI) {
+	routing.Setup(router, cfg, db, provider, accountDB, userAPI)
 }
 
 func NewInternalAPI(_cfg *config.AuthAPI, db storage.Database, provider fosite.OAuth2Provider) api.AuthInternalAPI {
