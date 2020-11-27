@@ -24,7 +24,7 @@ func Setup(
 	}))).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
 	router.Handle("/auth", httputil.MakeHTMLAPI("oauth_auth", func(rw http.ResponseWriter, req *http.Request) *util.JSONResponse {
-		Authorize(rw, req, oauth2Provider)
+		Authorize(rw, req, oauth2Provider, database)
 		return nil
 	})).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 

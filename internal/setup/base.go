@@ -37,6 +37,8 @@ import (
 
 	appserviceAPI "github.com/matrix-org/dendrite/appservice/api"
 	asinthttp "github.com/matrix-org/dendrite/appservice/inthttp"
+	authapi "github.com/matrix-org/dendrite/authapi/api"
+	authapiinthttp "github.com/matrix-org/dendrite/authapi/inthttp"
 	eduServerAPI "github.com/matrix-org/dendrite/eduserver/api"
 	eduinthttp "github.com/matrix-org/dendrite/eduserver/inthttp"
 	federationSenderAPI "github.com/matrix-org/dendrite/federationsender/api"
@@ -50,8 +52,6 @@ import (
 	skinthttp "github.com/matrix-org/dendrite/signingkeyserver/inthttp"
 	userapi "github.com/matrix-org/dendrite/userapi/api"
 	userapiinthttp "github.com/matrix-org/dendrite/userapi/inthttp"
-	authapi "github.com/matrix-org/dendrite/authapi/api"
-	authapiinthttp "github.com/matrix-org/dendrite/authapi/inthttp"
 	"github.com/sirupsen/logrus"
 
 	_ "net/http/pprof"

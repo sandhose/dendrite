@@ -4,12 +4,15 @@ import (
 	"net/http"
 
 	"github.com/ory/fosite"
-	"github.com/ory/fosite/handler/openid"
-	log "github.com/sirupsen/logrus"
+
+	"github.com/matrix-org/dendrite/authapi/api"
+	"github.com/matrix-org/dendrite/authapi/storage"
+	"github.com/matrix-org/util"
 )
 
-func Authorize(rw http.ResponseWriter, req *http.Request, oauth2Provider fosite.OAuth2Provider) {
+func Authorize(rw http.ResponseWriter, req *http.Request, oauth2Provider fosite.OAuth2Provider, db storage.Database) {
 	ctx := req.Context()
+	log := util.GetLogger(ctx)
 
 	ar, err := oauth2Provider.NewAuthorizeRequest(ctx, req)
 	if err != nil {
@@ -23,16 +26,17 @@ func Authorize(rw http.ResponseWriter, req *http.Request, oauth2Provider fosite.
 	}
 
 	// TODO: actually authorize users
-
-	// TODO: implement the fosite.Session & fosite/handler/openid.Session interfaces
-	session := openid.NewDefaultSession()
-	session.Subject = "bob"
-	session.Claims.Subject = "bob"
+	session := api.NewSession("foo", "bar")
 
 	response, err := oauth2Provider.NewAuthorizeResponse(ctx, ar, session)
 	if err != nil {
 		log.WithError(err).WithContext(ctx).Error("Could not fullfil authorization request")
 		oauth2Provider.WriteAuthorizeError(rw, ar, err)
+		return
+	}
+
+	if err := db.CreateSession(ctx, ar.GetID(), session); err != nil {
+		// TODO: write error
 		return
 	}
 

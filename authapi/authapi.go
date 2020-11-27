@@ -42,6 +42,8 @@ func NewProvider(db storage.Database, cfg *config.AuthAPI) fosite.OAuth2Provider
 		strategy,
 		hasher,
 
+		compose.OAuth2TokenIntrospectionFactory,
+
 		compose.OAuth2AuthorizeExplicitFactory,
 		compose.OAuth2RefreshTokenGrantFactory,
 
@@ -74,6 +76,9 @@ func AddPublicRoutes(router *mux.Router, cfg *config.AuthAPI, db storage.Databas
 	routing.Setup(router, cfg, db, provider)
 }
 
-func NewInternalAPI(_cfg *config.AuthAPI, _db storage.Database, provider fosite.OAuth2Provider) api.AuthInternalAPI {
-	return &internal.AuthInternalAPI{OAuth2Provider: provider}
+func NewInternalAPI(_cfg *config.AuthAPI, db storage.Database, provider fosite.OAuth2Provider) api.AuthInternalAPI {
+	return &internal.AuthInternalAPI{
+		OAuth2Provider: provider,
+		Database:       db,
+	}
 }

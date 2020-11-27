@@ -14,6 +14,9 @@ type Database interface {
 	GetClient(ctx context.Context, id string) (*api.Client, error)
 	CreateClient(ctx context.Context, client *api.Client) error
 	UpdateClient(ctx context.Context, client *api.Client) error
+
+	GetSession(ctx context.Context, id string) (*api.Session, error)
+	CreateSession(ctx context.Context, id string, session *api.Session) error
 }
 
 type WrappedStorage struct {

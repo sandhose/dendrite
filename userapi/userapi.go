@@ -16,9 +16,9 @@ package userapi
 
 import (
 	"github.com/gorilla/mux"
+	authapi "github.com/matrix-org/dendrite/authapi/api"
 	"github.com/matrix-org/dendrite/internal/config"
 	keyapi "github.com/matrix-org/dendrite/keyserver/api"
-	authapi "github.com/matrix-org/dendrite/authapi/api"
 	"github.com/matrix-org/dendrite/userapi/api"
 	"github.com/matrix-org/dendrite/userapi/internal"
 	"github.com/matrix-org/dendrite/userapi/inthttp"

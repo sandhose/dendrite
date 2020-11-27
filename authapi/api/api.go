@@ -2,11 +2,6 @@ package api
 
 import "context"
 
-type Session struct {
-	UserID   string `json:"user_id"`
-	ClientID string `json:"client_id"`
-}
-
 type AuthInternalAPI interface {
 	IntrospectAccessToken(ctx context.Context, req *AccessTokenIntrospectionRequest, res *AccessTokenIntrospectionResponse) error
 }
@@ -17,5 +12,6 @@ type AccessTokenIntrospectionRequest struct {
 }
 
 type AccessTokenIntrospectionResponse struct {
-	*Session `json:"session"`
+	Session *Session `json:"session"`
+	Client  *Client  `json:"client"`
 }

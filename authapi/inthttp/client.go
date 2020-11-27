@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/matrix-org/dendrite/internal/httputil"
 	"github.com/matrix-org/dendrite/authapi/api"
+	"github.com/matrix-org/dendrite/internal/httputil"
 	"github.com/opentracing/opentracing-go"
 )
 

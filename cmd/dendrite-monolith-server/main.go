@@ -57,6 +57,7 @@ func main() {
 		// statements in the configuration so that we know where to find
 		// the API endpoints. They'll listen on the same port as the monolith
 		// itself.
+		cfg.AuthAPI.InternalAPI.Connect = httpAPIAddr
 		cfg.AppServiceAPI.InternalAPI.Connect = httpAPIAddr
 		cfg.ClientAPI.InternalAPI.Connect = httpAPIAddr
 		cfg.EDUServer.InternalAPI.Connect = httpAPIAddr
@@ -112,6 +113,10 @@ func main() {
 
 	authDB, oauth2Provider := authapi.Init(&base.Cfg.AuthAPI)
 	authAPI := authapi.NewInternalAPI(&base.Cfg.AuthAPI, authDB, oauth2Provider)
+	if base.UseHTTPAPIs {
+		authapi.AddInternalRoutes(base.InternalAPIMux, authAPI)
+		authAPI = base.AuthAPIHTTPClient()
+	}
 
 	keyAPI := keyserver.NewInternalAPI(&base.Cfg.KeyServer, fsAPI)
 	userAPI := userapi.NewInternalAPI(accountDB, &cfg.UserAPI, cfg.Derived.ApplicationServices, keyAPI, authAPI)
@@ -130,7 +135,6 @@ func main() {
 		appservice.AddInternalRoutes(base.InternalAPIMux, asAPI)
 		asAPI = base.AppserviceHTTPClient()
 	}
-	
 
 	monolith := setup.Monolith{
 		Config:         base.Cfg,

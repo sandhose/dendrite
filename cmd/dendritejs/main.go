@@ -22,8 +22,8 @@ import (
 	"syscall/js"
 
 	"github.com/gorilla/mux"
-	"github.com/matrix-org/dendrite/authapi"
 	"github.com/matrix-org/dendrite/appservice"
+	"github.com/matrix-org/dendrite/authapi"
 	"github.com/matrix-org/dendrite/eduserver"
 	"github.com/matrix-org/dendrite/eduserver/cache"
 	"github.com/matrix-org/dendrite/federationsender"

@@ -22,11 +22,11 @@ import (
 	"fmt"
 
 	"github.com/matrix-org/dendrite/appservice/types"
+	authapi "github.com/matrix-org/dendrite/authapi/api"
 	"github.com/matrix-org/dendrite/clientapi/userutil"
 	"github.com/matrix-org/dendrite/internal/config"
 	"github.com/matrix-org/dendrite/internal/sqlutil"
 	keyapi "github.com/matrix-org/dendrite/keyserver/api"
-	authapi "github.com/matrix-org/dendrite/authapi/api"
 	"github.com/matrix-org/dendrite/userapi/api"
 	"github.com/matrix-org/dendrite/userapi/storage/accounts"
 	"github.com/matrix-org/dendrite/userapi/storage/devices"
@@ -350,11 +350,18 @@ func (a *UserInternalAPI) QueryAccessToken(ctx context.Context, req *api.QueryAc
 		res.Err = err
 		return nil
 	}
-	device, err := a.DeviceDB.GetDeviceByAccessToken(ctx, req.AccessToken)
+
+	authRes := &authapi.AccessTokenIntrospectionResponse{}
+	authReq := &authapi.AccessTokenIntrospectionRequest{
+		Token:  req.AccessToken,
+		Scopes: []string{},
+	}
+	if err := a.AuthAPI.IntrospectAccessToken(ctx, authReq, authRes); err != nil {
+		return err
+	}
+
+	device, err := a.DeviceDB.GetDeviceByID(ctx, authRes.Session.LocalPart, authRes.Session.DeviceID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
 		return err
 	}
 	res.Device = device

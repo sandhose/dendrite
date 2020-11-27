@@ -20,7 +20,9 @@ type Database struct {
 
 	clientMu sync.Mutex
 
-	inMemoryClients map[string]*api.Client
+	inMemoryLock     sync.RWMutex
+	inMemoryClients  map[string]*api.Client
+	inMemorySessions map[string]*api.Session
 }
 
 func NewDatabase(dbProperties *config.DatabaseOptions) (*Database, error) {
@@ -30,9 +32,10 @@ func NewDatabase(dbProperties *config.DatabaseOptions) (*Database, error) {
 	}
 
 	d := &Database{
-		db:              db,
-		writer:          sqlutil.NewExclusiveWriter(),
-		inMemoryClients: make(map[string]*api.Client),
+		db:               db,
+		writer:           sqlutil.NewExclusiveWriter(),
+		inMemoryClients:  make(map[string]*api.Client),
+		inMemorySessions: make(map[string]*api.Session),
 	}
 
 	return d, nil
@@ -41,6 +44,9 @@ func NewDatabase(dbProperties *config.DatabaseOptions) (*Database, error) {
 func (d *Database) GetClient(
 	ctx context.Context, id string,
 ) (*api.Client, error) {
+	d.inMemoryLock.RLock()
+	defer d.inMemoryLock.RUnlock()
+
 	client, ok := d.inMemoryClients[id]
 	if !ok {
 		return nil, errors.New("client not found")
@@ -51,6 +57,9 @@ func (d *Database) GetClient(
 func (d *Database) CreateClient(
 	ctx context.Context, client *api.Client,
 ) error {
+	d.inMemoryLock.Lock()
+	defer d.inMemoryLock.Unlock()
+
 	if _, ok := d.inMemoryClients[client.GetID()]; ok {
 		return errors.New("client exists")
 	}
@@ -62,10 +71,40 @@ func (d *Database) CreateClient(
 func (d *Database) UpdateClient(
 	ctx context.Context, client *api.Client,
 ) error {
+	d.inMemoryLock.Lock()
+	defer d.inMemoryLock.Unlock()
+
 	if _, ok := d.inMemoryClients[client.GetID()]; !ok {
 		return errors.New("client not found")
 	}
 
 	d.inMemoryClients[client.GetID()] = client
+	return nil
+}
+
+func (d *Database) GetSession(
+	ctx context.Context, id string,
+) (*api.Session, error) {
+	d.inMemoryLock.RLock()
+	defer d.inMemoryLock.RUnlock()
+
+	session, ok := d.inMemorySessions[id]
+	if !ok {
+		return nil, errors.New("session not found")
+	}
+	return session, nil
+}
+
+func (d *Database) CreateSession(
+	ctx context.Context, id string, session *api.Session,
+) error {
+	d.inMemoryLock.Lock()
+	defer d.inMemoryLock.Unlock()
+
+	if _, ok := d.inMemorySessions[id]; ok {
+		return errors.New("session exists")
+	}
+
+	d.inMemorySessions[id] = session
 	return nil
 }

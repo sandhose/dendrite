@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -394,5 +395,18 @@ func (c *Client) Fill(values map[string]interface{}) error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Client) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.Serialize())
+}
+
+func (c *Client) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+	c.Fill(m)
 	return nil
 }
